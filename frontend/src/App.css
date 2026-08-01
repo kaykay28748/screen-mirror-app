@@ -374,6 +374,7 @@
 .footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
   padding: 20px 28px;
@@ -382,6 +383,23 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--faint);
+}
+
+.footer-name {
+  color: var(--chalk);
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 200ms var(--ease-snap);
+}
+
+.footer-link:hover {
+  color: var(--chalk);
 }
 
 /* ---------- View layout ---------- */

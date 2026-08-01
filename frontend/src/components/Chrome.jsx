@@ -52,8 +52,17 @@ export function RollText({ text }) {
 export function Footer() {
   return (
     <footer className="footer">
-      <span>© 2026 Hexcast</span>
-      <span>Video never touches the server</span>
+      <span>
+        © 2026 Hexcast — built by <span className="footer-name">Prince Kay</span>
+      </span>
+      <a
+        className="footer-link"
+        href="https://github.com/kaykay28748/screen-mirror-app"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        ★ Star on GitHub
+      </a>
     </footer>
   );
 }
