@@ -421,7 +421,8 @@ export default function Reader({ onExit, onNavigate }) {
       setCurrentPage(0);
     } catch (err) {
       console.error(err);
-      setError(`Could not read "${file.name}". Try a different file.`);
+      const detail = err && err.message ? ` ${err.message}` : '';
+      setError(`Could not read "${file.name}". Try a different file.${detail}`);
     } finally {
       setLoading(false);
     }
