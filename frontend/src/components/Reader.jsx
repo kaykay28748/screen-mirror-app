@@ -53,7 +53,8 @@ function normalizeText(raw) {
 
 async function parsePdf(file) {
   const data = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  const loadingTask = pdfjsLib.getDocument({ data });
+  const pdf = await loadingTask.promise;
   try {
     const pages = [];
     for (let i = 1; i <= pdf.numPages; i += 1) {
@@ -71,7 +72,7 @@ async function parsePdf(file) {
     }
     return pages;
   } finally {
-    await pdf.destroy();
+    await loadingTask.destroy();
   }
 }
 
