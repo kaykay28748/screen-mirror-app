@@ -128,3 +128,25 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Signaling server listening on port ${PORT}`);
 });
+
+// Keepalive: Render free-tier web services spin down after ~15 min without
+// inbound traffic. Ping our own /health every few minutes so the instance
+// never sleeps. RENDER_EXTERNAL_URL is set automatically by Render; SELF_URL
+// is a manual override for other hosts. No-op locally.
+const KEEPALIVE_INTERVAL_MS = parseInt(process.env.KEEPALIVE_INTERVAL_MS, 10) || 4 * 60 * 1000;
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || '';
+
+if (SELF_URL) {
+  console.log(`[keepalive] pinging ${SELF_URL}/health every ${KEEPALIVE_INTERVAL_MS}ms`);
+  const ping = () => {
+    fetch(`${SELF_URL}/health`)
+      .then((res) => {
+        if (res.ok) {
+          console.log(`[keepalive] ping ok @ ${new Date().toISOString()}`);
+        }
+      })
+      .catch((err) => console.warn(`[keepalive] ping failed: ${err.message}`))
+      .finally(() => setTimeout(ping, KEEPALIVE_INTERVAL_MS));
+  };
+  setTimeout(ping, KEEPALIVE_INTERVAL_MS);
+}

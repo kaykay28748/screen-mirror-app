@@ -116,7 +116,8 @@ npm install
 npm run dev        # Vite dev server
 ```
 
-Open the printed URL. Defaults point at `http://localhost:5000`; to override,
+Open the printed URL. The default points at the hosted backend
+(`https://hex-cast-backend.onrender.com`); to run against a local server,
 create `frontend/.env`:
 
 ```
@@ -131,6 +132,30 @@ ICE servers (TURN/STUN) are configured in `frontend/src/config.js`.
 2. Open the app on a phone (same Wi-Fi or LAN) → **I'm a phone** → dial the code.
 3. Share a window or camera. Video appears on the laptop.
 
+## Live Deployment
+
+The app is live on Render:
+
+| Service  | URL                                          |
+| -------- | -------------------------------------------- |
+| Frontend | <https://hex-cast.onrender.com>              |
+| Backend  | <https://hex-cast-backend.onrender.com>      |
+
+Notes:
+
+- `VITE_SOCKET_URL` is baked into the bundle at **build time**, so the
+  frontend's `dist/` must be rebuilt with it set to
+  `https://hex-cast-backend.onrender.com` (either via a Render env var or the
+  default in `frontend/src/config.js`). `npm run build` then deploy `dist/`.
+- The backend's CORS is open (`origin: '*'`), which is what allows the
+  cross-origin socket connection from the hosted frontend.
+- Render free-tier services sleep after ~15 minutes of inactivity. Two
+  keepalives keep the backend warm: the backend self-pings its `/health`
+  endpoint every 4 minutes using Render's automatic `RENDER_EXTERNAL_URL`
+  (override with `SELF_URL`), and every open tab of the frontend pings the same
+  endpoint every 4 minutes (`src/keepalive.js`). Tune with the
+  `KEEPALIVE_INTERVAL_MS` env var.
+
 ## Project Structure
 
 ```
@@ -141,8 +166,9 @@ screen-mirror-app/
     ├── src/
     │   ├── App.jsx           # Role selection / landing
     │   ├── config.js         # SOCKET_URL + ICE_SERVERS
+    │   ├── keepalive.js      # Frontend-side keepalive ping to the backend
     │   └── components/
-    │       ├── Chrome.jsx    # Navbar, StatusTag, RollText, Footer
+    │       ├── Chrome.jsx    # Navbar, StatusPill, Footer, icons
     │       ├── LaptopReceiver.jsx   # WebRTC answerer
     │       └── MobileSender.jsx     # WebRTC offerer
     ├── android/              # Capacitor Android shell
