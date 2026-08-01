@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+
+# Dependencies
+node_modules/
+dist/
+.env
+
+# IDE / System files
+.DS_Store
+.vscode/
+Thumbs.db
