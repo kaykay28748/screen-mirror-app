@@ -1633,6 +1633,22 @@
   color: var(--ink-muted);
 }
 
+.reader-read {
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(243, 244, 246, 0.04), rgba(243, 244, 246, 0.16));
+  animation: reader-read-pulse 2s ease-in-out infinite;
+}
+
+@keyframes reader-read-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(243, 244, 246, 0.06);
+  }
+  50% {
+    box-shadow: inset 0 0 0 1px rgba(243, 244, 246, 0.15);
+  }
+}
+
 .reader-transport {
   display: flex;
   flex-wrap: wrap;

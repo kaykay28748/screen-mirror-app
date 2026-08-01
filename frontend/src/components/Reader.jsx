@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import workerSrc from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import mammoth from 'mammoth/mammoth.browser.js';
@@ -50,6 +50,16 @@ function normalizeText(raw) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+
+const ReadHighlight = memo(function ReadHighlight({ text, pos }) {
+  const clamped = Math.max(0, Math.min(text.length, Math.floor(pos)));
+  return (
+    <>
+      <span className="reader-read">{text.slice(0, clamped)}</span>
+      {text.slice(clamped)}
+    </>
+  );
+});
 
 async function parsePdf(file) {
   const data = await file.arrayBuffer();
@@ -151,6 +161,7 @@ export default function Reader({ onExit, onNavigate }) {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState('');
   const [errorStack, setErrorStack] = useState('');
+  const [readPos, setReadPos] = useState(0);
   const [speechSupported] = useState(() => Boolean(window.speechSynthesis));
 
   const fileInputRef = useRef(null);
@@ -165,6 +176,65 @@ export default function Reader({ onExit, onNavigate }) {
   const voiceRef = useRef(null);
   const autoRef = useRef(true);
   const rateRef = useRef(1);
+  const progressRef = useRef({ pos: 0, at: 0 });
+  const progressTimerRef = useRef(null);
+
+  function markProgress(pos) {
+    posRef.current = pos;
+    progressRef.current = { pos, at: Date.now() }; // eslint-disable-line react-hooks/purity
+    setReadPos(pos);
+    scrollHeadIntoView(pos);
+  }
+
+  function scrollHeadIntoView(pos) {
+    const container = pageTextRef.current;
+    if (!container) return;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    let remaining = Math.max(0, pos);
+    while (node) {
+      if (remaining <= node.data.length) {
+        try {
+          const range = document.createRange();
+          range.setStart(node, remaining);
+          range.collapse(true);
+          const rect = range.getBoundingClientRect();
+          const box = container.getBoundingClientRect();
+          if (rect.top < box.top || rect.bottom > box.bottom) {
+            container.scrollTop += rect.top - box.top - 8;
+          }
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+      remaining -= node.data.length;
+      node = walker.nextNode();
+    }
+  }
+
+  function stopProgressTicker() {
+    if (progressTimerRef.current) {
+      window.clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  }
+
+  function startProgressTicker() {
+    stopProgressTicker();
+    progressTimerRef.current = window.setInterval(() => {
+      if (!playingRef.current || pausedRef.current) return;
+      const text = pagesRef.current[pageRef.current] || '';
+      const base = progressRef.current;
+      const elapsed = (Date.now() - base.at) / 1000;
+      const estimated = base.pos + elapsed * 15 * (rateRef.current || 1);
+      if (estimated > base.pos) {
+        const next = Math.max(0, Math.min(text.length, Math.floor(estimated)));
+        setReadPos(next);
+        scrollHeadIntoView(next);
+      }
+    }, 120);
+  }
 
   useEffect(() => {
     const synth = window.speechSynthesis;
@@ -190,12 +260,14 @@ export default function Reader({ onExit, onNavigate }) {
     synth.addEventListener('voiceschanged', load);
     return () => {
       window.clearTimeout(timer);
+      stopProgressTicker();
       synth.removeEventListener('voiceschanged', load);
       synth.cancel();
     };
   }, []);
 
   function finishSession() {
+    stopProgressTicker();
     playingRef.current = false;
     pausedRef.current = false;
     setIsPlaying(false);
@@ -234,6 +306,8 @@ export default function Reader({ onExit, onNavigate }) {
       acc += chunks[k].length;
     }
     posRef.current = pos;
+    markProgress(pos);
+    startProgressTicker();
     speakChunkChain(pageIdx, startChunk, startInChunk, acc);
   }
 
@@ -270,12 +344,12 @@ export default function Reader({ onExit, onNavigate }) {
     utterance.volume = 1;
     utterance.onboundary = (event) => {
       if (typeof event.charIndex === 'number') {
-        posRef.current = offsetBefore + event.charIndex;
+        markProgress(offsetBefore + event.charIndex);
       }
     };
     utterance.onend = () => {
       if (!playingRef.current) return;
-      posRef.current = offsetBefore + chunkText.length;
+      markProgress(offsetBefore + chunkText.length);
       speakChunkChain(pageIdx, chunkIndex + 1, 0, baseOffset + fullChunk.length);
     };
     utterance.onerror = (event) => {
@@ -327,11 +401,13 @@ export default function Reader({ onExit, onNavigate }) {
   }
 
   function handleStop() {
+    stopProgressTicker();
     const synth = window.speechSynthesis;
     if (synth) synth.cancel();
     playingRef.current = false;
     pausedRef.current = false;
     posRef.current = 0;
+    setReadPos(0);
     setIsPlaying(false);
     setIsPaused(false);
   }
@@ -343,9 +419,11 @@ export default function Reader({ onExit, onNavigate }) {
     const wasActive = playingRef.current;
     const synth = window.speechSynthesis;
     if (synth) synth.cancel();
+    stopProgressTicker();
     playingRef.current = false;
     pausedRef.current = false;
     posRef.current = 0;
+    setReadPos(0);
     pageRef.current = clamped;
     setCurrentPage(clamped);
     setIsPlaying(false);
@@ -608,7 +686,9 @@ export default function Reader({ onExit, onNavigate }) {
                     </span>
                   </div>
                   <div ref={pageTextRef} className="reader-text">
-                    {pages[currentPage] || (
+                    {pages[currentPage] ? (
+                      <ReadHighlight text={pages[currentPage]} pos={readPos} />
+                    ) : (
                       <span className="reader-empty">No readable text on this page.</span>
                     )}
                   </div>
