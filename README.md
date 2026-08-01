@@ -189,10 +189,9 @@ screen-mirror-app/
 
 ## Design
 
-The UI follows a strict anti-“AI-slop” system — charcoal monochrome
-(`#0a0a0a → #f9f9f9`), Playfair Display serif paired with Geist Mono, hard
-offset shadows, film grain, and a physics-based motion engine (cinematic /
-snap / elastic easing curves). Full contract in [`DESIGN.md`](./DESIGN.md).
+The UI follows a strict anti-"AI-slop" system — charcoal monochrome, Geist Mono,
+hairline 1px borders, and a physics-based motion engine (a single cinematic
+curve: `cubic-bezier(0.16, 1, 0.3, 1)`).
 
 ---
 

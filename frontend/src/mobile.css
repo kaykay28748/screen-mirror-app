@@ -16,7 +16,7 @@
 /* Phone */
 @media (max-width: 640px) {
   .navbar {
-    padding-top: 12px;
+    padding-top: calc(12px + env(safe-area-inset-top));
     padding-bottom: 12px;
   }
 

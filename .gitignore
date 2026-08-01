@@ -148,6 +148,10 @@ node_modules/
 dist/
 .env
 
+# Private design/architecture docs (local-only)
+ARCHITECTURE.md
+DESIGN.md
+
 # IDE / System files
 .DS_Store
 .vscode/
