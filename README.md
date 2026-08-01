@@ -1,11 +1,16 @@
 # Hexcast
 
-> Cast a screen, anywhere, in seconds.
+> Mirror any screen, read any document.
 
 **Hexcast** is a peer-to-peer screen mirroring system. Point a phone at a laptop
 (or a laptop at a phone), enter one six-digit code, and video starts flowing
 directly between the two devices — no accounts, no cloud, no cables, no apps
 to install.
+
+**HexRead** is its sibling, built into the same app: a document reader that
+parses PDFs and DOCX entirely in your browser and reads them aloud using your
+device's own voices. Drag a file in, press play — your document never leaves
+the device.
 
 ---
 
@@ -55,6 +60,10 @@ brand check at the door. Any device with a modern browser is welcome:
 
 - **One-code pairing** — 6-digit room codes, regenerated per session, validated
   server-side.
+- **HexRead document reader** — drop in a PDF or DOCX and it's parsed locally
+  (PDF.js / Mammoth) and read aloud page by page via the Web Speech API, with
+  male/female voice choice, speed control, and pause/jump. No uploads — parsing
+  and speech happen entirely in the browser.
 - **True peer-to-peer** — direct WebRTC `RTCPeerConnection`; media never touches
   the signaling server.
 - **Works in any modern browser** — no install needed to receive or send.
@@ -144,6 +153,8 @@ the **Actions → Build iOS app → Artifacts** tab.
 | Media      | WebRTC (getUserMedia / getDisplayMedia) |
 | Mobile     | Capacitor 8 (Android + iOS wrappers)    |
 | iOS media  | ReplayKit + Google WebRTC iOS SDK (SPM) |
+| Documents  | PDF.js + Mammoth (in-browser parsing)   |
+| Speech     | Web Speech API (local synthesis)        |
 | Install    | PWA (vite-plugin-pwa, auto-update)      |
 | Fonts/UI   | Geist Mono + Playfair Display, charcoal monochrome editorial system |
 
@@ -243,12 +254,14 @@ screen-mirror-app/
     │       ├── Package.swift       #   SPM manifest (Capacitor + WebRTC)
     │       └── ios/Sources/.../HexcastScreenSharePlugin.swift  # ReplayKit + RTCPeerConnection
     ├── src/
-    │   ├── App.jsx           # Role selection / landing
+    │   ├── App.jsx           # View state machine + landing (home/laptop/phone/reader/info pages)
     │   ├── config.js         # SOCKET_URL + ICE_SERVERS
     │   ├── keepalive.js      # Frontend-side keepalive ping to the backend
     │   ├── native/screenShare.js  # JS handle to the native ScreenShare plugin
     │   └── components/
     │       ├── Chrome.jsx    # Navbar, StatusPill, Footer, icons
+    │       ├── Reader.jsx    # HexRead: PDF/DOCX parsing + text-to-speech
+    │       ├── InfoPages.jsx # About / FAQ / Privacy
     │       ├── LaptopReceiver.jsx   # WebRTC answerer
     │       └── MobileSender.jsx     # WebRTC offerer (native iOS path included)
     ├── android/              # Capacitor Android shell
@@ -262,6 +275,8 @@ screen-mirror-app/
 - [x] **Native iPhone screen projection (iOS)** — the `hexcast-screen-share`
   plugin mirrors the real iPhone screen via ReplayKit + WebRTC. Build it with
   the GitHub Actions workflow (see "Building the iOS app without a Mac").
+- [x] **HexRead document reader** — in-browser PDF/DOCX parsing and local
+  text-to-speech, shipped as a first-class "sibling" feature of the app.
 - [ ] **Android screen projection** — the Android WebView also blocks
   `getDisplayMedia`; the same seam is ready for a `MediaProjection` plugin
   (the Android app currently mirrors the camera).
