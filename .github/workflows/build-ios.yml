@@ -31,6 +31,13 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 60
 
+    env:
+      APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+      DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,7 +62,7 @@ jobs:
         run: npx cap sync ios
 
       - name: Import Apple signing certificate
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign == 'true' && env.APPLE_CERTIFICATE_P12 != '' }}
         env:
           CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -74,7 +81,7 @@ jobs:
           security find-identity -v -p codesigning "$KEYCHAIN"
 
       - name: Install provisioning profile
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_PROVISIONING_PROFILE != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign == 'true' && env.APPLE_PROVISIONING_PROFILE != '' }}
         env:
           PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
@@ -88,7 +95,7 @@ jobs:
              "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
 
       - name: Archive (signed)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign == 'true' && env.APPLE_CERTIFICATE_P12 != '' }}
         env:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         working-directory: frontend/ios/App
@@ -104,7 +111,7 @@ jobs:
             CODE_SIGN_STYLE=Automatic
 
       - name: Export signed IPA
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign == 'true' && env.APPLE_CERTIFICATE_P12 != '' }}
         env:
           EXPORT_METHOD: ${{ inputs.export_method }}
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
@@ -136,7 +143,7 @@ jobs:
           ls -la dist
 
       - name: Archive (unsigned compile check)
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.sign == 'true' && env.APPLE_CERTIFICATE_P12 != '') }}
         working-directory: frontend/ios/App
         run: |
           set -euxo pipefail
