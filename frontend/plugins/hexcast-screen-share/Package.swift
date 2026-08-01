@@ -16,11 +16,11 @@ let package = Package(
     targets: [
         .target(
             name: "HexcastScreenShare",
-            path: "ios/Sources/HexcastScreenShare",
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "WebRTC", package: "WebRTC")
-            ]
+            ],
+            path: "ios/Sources/HexcastScreenShare"
         )
     ]
 )

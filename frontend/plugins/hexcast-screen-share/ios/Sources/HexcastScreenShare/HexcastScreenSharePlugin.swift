@@ -1,11 +1,7 @@
 import Capacitor
+import CoreMedia
 import ReplayKit
 import WebRTC
-
-/// Dummy capturer. We push frames into the `RTCVideoSource` manually from the
-/// ReplayKit capture handler, so this capturer never pulls from a device.
-private final class HexcastReplayCapturer: RTCVideoCapturer {
-}
 
 @objc(HexcastScreenSharePlugin)
 public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
@@ -23,8 +19,8 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
 
     private static var sslInitialized = false
 
-    private let capturer = HexcastReplayCapturer()
-    private var factory: RTCPeerConnectionFactory?
+    private let factory = RTCPeerConnectionFactory()
+    private var capturer: RTCVideoCapturer?
     private var videoSource: RTCVideoSource?
     private var videoTrack: RTCVideoTrack?
     private var peerConnection: RTCPeerConnection?
@@ -33,15 +29,14 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
     // MARK: - Setup
 
     private func ensureFactory() {
-        guard factory == nil else { return }
+        guard videoSource == nil else { return }
         if !HexcastScreenSharePlugin.sslInitialized {
             RTCInitializeSSL()
             HexcastScreenSharePlugin.sslInitialized = true
         }
-        let instance = RTCPeerConnectionFactory()
-        let source = instance.videoSource()
-        let track = instance.videoTrack(with: source, trackId: "hexcast-screen")
-        factory = instance
+        let source = factory.videoSource()
+        let track = factory.videoTrack(with: source, trackId: "hexcast-screen")
+        capturer = RTCVideoCapturer(delegate: source)
         videoSource = source
         videoTrack = track
     }
@@ -96,7 +91,7 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func createOffer(_ call: CAPPluginCall) {
         ensureFactory()
-        guard let factory, let videoTrack else {
+        guard let videoTrack else {
             call.reject("Screen capture is not initialised")
             return
         }
@@ -217,11 +212,12 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
     // MARK: - Frame delivery
 
     private func pushFrame(_ sampleBuffer: CMSampleBuffer) {
+        guard let capturer, let videoSource else { return }
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let timestampNs = Int64(CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer)) * 1_000_000_000)
         let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
         let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: timestampNs)
-        videoSource?.capturer(capturer, didCapture: frame)
+        videoSource.capturer(capturer, didCapture: frame)
     }
 
     private func applyVideoBitrate(_ peerConnection: RTCPeerConnection) {
@@ -245,9 +241,9 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
         }
         peerConnection?.close()
         peerConnection = nil
+        capturer = nil
         videoTrack = nil
         videoSource = nil
-        factory = nil
     }
 }
 
