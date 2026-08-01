@@ -1,4 +1,4 @@
-function NavLinks({ onNavigate }) {
+function NavLinks({ onNavigate, withReader = true }) {
   if (!onNavigate) {
     return null;
   }
@@ -13,11 +13,16 @@ function NavLinks({ onNavigate }) {
       <button type="button" className="nav-link" onClick={() => onNavigate('privacy')}>
         Privacy
       </button>
+      {withReader ? (
+        <button type="button" className="nav-link" onClick={() => onNavigate('reader')}>
+          HexRead
+        </button>
+      ) : null}
     </div>
   );
 }
 
-export function Navbar({ onExit, onNavigate }) {
+export function Navbar({ onExit, onNavigate, activeView = 'home' }) {
   return (
     <header className="navbar">
       <div className="shell">
@@ -37,9 +42,17 @@ export function Navbar({ onExit, onNavigate }) {
             </svg>
           </span>
           Hexcast
+          <span className="brand-divider" aria-hidden="true" />
+          <button
+            type="button"
+            className={`brand-product ${activeView === 'reader' ? 'brand-product-active' : ''}`}
+            onClick={() => onNavigate && onNavigate('reader')}
+          >
+            HexRead
+          </button>
         </span>
         <div className="nav-group">
-          <NavLinks onNavigate={onNavigate} />
+          <NavLinks onNavigate={onNavigate} withReader={false} />
           {onExit ? (
             <button type="button" className="back-button" onClick={onExit}>
               <svg

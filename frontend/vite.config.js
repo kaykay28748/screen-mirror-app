@@ -12,7 +12,8 @@ export default defineConfig({
       manifest: {
         name: 'Hexcast',
         short_name: 'Hexcast',
-        description: 'Cast a phone or laptop screen to any device with a six-digit code.',
+        description:
+          'Mirror a phone or laptop screen with a six-digit code, or let HexRead read PDFs and DOCX aloud page by page.',
         theme_color: '#0a0b10',
         background_color: '#09090b',
         display: 'standalone',

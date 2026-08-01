@@ -18,6 +18,8 @@
     "@capacitor/core": "^8.5.0",
     "@capacitor/ios": "^8.5.0",
     "hexcast-screen-share": "file:plugins/hexcast-screen-share",
+    "mammoth": "^1.12.0",
+    "pdfjs-dist": "^6.2.108",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "socket.io-client": "^4.8.3",

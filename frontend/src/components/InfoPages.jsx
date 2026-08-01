@@ -38,14 +38,40 @@ export function AboutPage({ onExit, onNavigate }) {
       onExit={onExit}
       onNavigate={onNavigate}
       eyebrow="About"
-      title="Mirror any screen, anywhere."
-      lede="Hexcast is a browser-to-browser screen mirror built on WebRTC. No accounts, no installs — just a six-digit code that pairs two devices over a private peer-to-peer link."
+      title="Mirror any screen, read any document."
+      lede="Hexcast is a browser-to-browser screen mirror built on WebRTC, with a built-in audio reader called HexRead. No accounts, no installs — just a six-digit code that pairs two devices over a private peer-to-peer link, or a PDF or DOCX you want read aloud."
     >
       <InfoSection title="How it works">
         <ul>
           <li>The laptop opens the receiver and prints a random six-digit room code.</li>
           <li>The phone enters the code, and the two devices pair through a tiny signaling relay.</li>
           <li>Video then flows directly between the two devices. The relay coordinates the handshake but never sees your picture.</li>
+        </ul>
+      </InfoSection>
+
+      <InfoSection title="HexRead — read documents aloud">
+        <p>
+          Hexcast also ships with <strong>HexRead</strong>, a built-in audio reader. It reads
+          documents to you the way a person would:
+        </p>
+        <ul>
+          <li>
+            <strong>Upload a PDF or DOCX</strong> by dragging and dropping it or browsing from
+            your device.
+          </li>
+          <li>
+            <strong>HexRead walks through it page by page</strong>, extracting the text right in
+            your browser.
+          </li>
+          <li>
+            <strong>Pick a male or female voice</strong>, set the pace, and let it read
+            continuously from page to page with natural pauses — pause, resume, jump ahead, or
+            stop at any time.
+          </li>
+          <li>
+            <strong>Your files never leave your device.</strong> Parsing and speech both happen
+            locally in the browser.
+          </li>
         </ul>
       </InfoSection>
 
@@ -76,14 +102,23 @@ export function AboutPage({ onExit, onNavigate }) {
             <strong>Same network is the smoothest.</strong> Peer-to-peer links work best when both devices share a
             Wi-Fi network (see the FAQ).
           </li>
+          <li>
+            <strong>HexRead needs text-based documents.</strong> Scanned or image-only PDFs contain no selectable
+            text, so there is nothing to read aloud. Choose a document with real text.
+          </li>
+          <li>
+            <strong>HexRead uses your device&apos;s own voices.</strong> The male and female voices available are the
+            ones installed on your operating system and browser — on a fresh browser it may take a moment to load
+            them.
+          </li>
         </ul>
       </InfoSection>
 
       <InfoSection title="Your privacy at a glance">
         <p>
-          No accounts, no tracking, no stored video. The relay only sees pairing signals (room code, device type,
-          connection hints); your screen and camera stream go straight between the two devices and are never
-          recorded. The full policy is on the Privacy page.
+          No accounts, no tracking, no stored video — and no uploaded documents. The relay only sees pairing
+          signals (room code, device type, connection hints); your screen and camera stream go straight between the
+          two devices, and HexRead files are read entirely on your device. The full policy is on the Privacy page.
         </p>
       </InfoSection>
 
@@ -101,7 +136,7 @@ export function PrivacyPage({ onExit, onNavigate }) {
       onNavigate={onNavigate}
       eyebrow="Privacy"
       title="Privacy policy"
-      lede="Hexcast is designed so that your screen and camera are never seen by the server. Here is what that means in practice."
+      lede="Hexcast is designed so that your screen, camera, and documents are never seen by the server. Here is what that means in practice."
     >
       <InfoSection title="We don&apos;t ask for anything">
         <p>
@@ -129,6 +164,29 @@ export function PrivacyPage({ onExit, onNavigate }) {
         </p>
       </InfoSection>
 
+      <InfoSection title="HexRead documents">
+        <p>
+          HexRead turns a PDF or DOCX into a spoken reading entirely on your device. In practice:
+        </p>
+        <ul>
+          <li>
+            <strong>Parsing happens in the browser.</strong> Your file is opened with open-source
+            extractors (PDF.js for PDFs, Mammoth for DOCX) running in the page itself — no file is
+            ever sent to a server.
+          </li>
+          <li>
+            <strong>Speech is synthesized on your device.</strong> HexRead uses your
+            browser&apos;s built-in text-to-speech engine, so the voices are local and the audio
+            is never transmitted.
+          </li>
+          <li>
+            <strong>Nothing is stored or logged.</strong> We never see, keep, or copy your
+            document. Its text lives only in the browser&apos;s memory and is discarded when you
+            leave the page or load a new file.
+          </li>
+        </ul>
+      </InfoSection>
+
       <InfoSection title="Permissions stay with you">
         <p>
           Your browser asks you to grant screen or camera access every time, and you choose exactly what to
@@ -145,7 +203,7 @@ export function PrivacyPage({ onExit, onNavigate }) {
       <InfoSection title="Local storage">
         <p>
           As a progressive web app, Hexcast caches its own code on your device so it loads quickly and can open
-          like an app. That cache contains the app itself — never your screen or camera content.
+          like an app. That cache contains the app itself — never your screen, camera, or HexRead documents.
         </p>
       </InfoSection>
 
@@ -158,8 +216,9 @@ export function PrivacyPage({ onExit, onNavigate }) {
 
       <InfoSection title="Open source">
         <p>
-          Hexcast is open source — you can read the full implementation on GitHub and verify these claims for
-          yourself.
+          Hexcast and HexRead are open source — you can read the full implementation on GitHub and verify these
+          claims for yourself. HexRead&apos;s document parsing relies on the open-source PDF.js and Mammoth
+          libraries.
         </p>
       </InfoSection>
     </InfoShell>
@@ -257,6 +316,17 @@ export function FaqPage({ onExit, onNavigate }) {
             <p className="faq-body">
               Leaving the sender or receiver view ends the session cleanly — sockets close and the camera or
               shared window stops. Re-open the view and use a fresh room code to restart.
+            </p>
+          </details>
+        </div>
+        <div className="faq-item">
+          <details>
+            <summary>Can I listen to a PDF or DOCX instead of reading it?</summary>
+            <p className="faq-body">
+              Yes — open <strong>HexRead</strong> from the nav, footer, or the landing page. Upload a PDF or
+              DOCX and it reads the document to you page by page, in a male or female voice, with pause, page
+              skip, and speed controls. The file is processed entirely in your browser and never leaves your
+              device.
             </p>
           </details>
         </div>
