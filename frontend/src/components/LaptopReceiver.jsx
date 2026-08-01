@@ -131,4 +131,48 @@ function LaptopReceiver({ onExit }) {
             <span className="stage-code-label">Room code</span>
           </div>
           <div className="code-plate">
-            <span className="c
+            <span className="code-numeral">{roomCode}</span>
+          </div>
+          <div className={`ticket ${isLive ? 'ticket-live' : ''}`}>
+            <span className="ticket-dot" aria-hidden="true" />
+            {isConnected ? status : 'Connecting to server...'}
+          </div>
+          <div className="video-frame">
+            <video ref={videoRef} autoPlay playsInline muted className="video" />
+            {!isLive ? (
+              <div className="video-idle">
+                <span>AWAITING SIGNAL</span>
+                <span className="video-idle-sub">The sender's stream appears here</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <aside className="view-aside">
+          <div className="plate">
+            <p className="plate-title">Session</p>
+            <dl className="dl">
+              <div>
+                <dt>Server</dt>
+                <dd className={isConnected ? 'ok' : 'bad'}>{isConnected ? 'Linked' : 'Offline'}</dd>
+              </div>
+              <div>
+                <dt>Peer</dt>
+                <dd className={isLive ? 'ok' : 'wait'}>{isLive ? 'Streaming' : 'Waiting'}</dd>
+              </div>
+              <div>
+                <dt>Transport</dt>
+                <dd>SRTP</dd>
+              </div>
+            </dl>
+          </div>
+          <button type="button" className="back-link" onClick={onExit}>
+            ← Back to roles
+          </button>
+        </aside>
+      </section>
+      <Footer />
+    </main>
+  );
+}
+
+export default LaptopReceiver;

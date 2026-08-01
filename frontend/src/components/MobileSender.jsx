@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { Capacitor } from '@capacitor/core';
 import { SOCKET_URL, ICE_SERVERS } from '../config';
+import { Masthead, Marquee, Footer } from './Chrome';
 
-function MobileSender() {
+function MobileSender({ onExit }) {
   const [roomCode, setRoomCode] = useState('');
   const [status, setStatus] = useState('Enter the room code to start');
   const socketRef = useRef(null);
@@ -166,30 +167,71 @@ function MobileSender() {
     };
   }, []);
 
+  const isLive = status === 'Connected';
+  const isBusy = status !== 'Enter the room code to start';
+
   return (
-    <section className="receiver-shell">
-      <div className="panel-card">
-        <p className="eyebrow">Phone sender</p>
-        <h1>Mirror your screen</h1>
-        <p className="room-code">Use the laptop code to connect.</p>
-        <label className="input-label" htmlFor="roomCode">
-          Room code
-        </label>
-        <input
-          id="roomCode"
-          value={roomCode}
-          onChange={(event) => setRoomCode(event.target.value)}
-          placeholder="000000"
-          inputMode="numeric"
-          maxLength={6}
-        />
-        <button type="button" onClick={() => startMirroring()} className="action-button">
-          Start Mirroring
-        </button>
-        <p className="status-pill">{status}</p>
-        <p className="helper-text">The laptop will show your screen once connected.</p>
-      </div>
-    </section>
+    <main className="app view">
+      <Masthead />
+      <Marquee />
+      <section className="view-grid">
+        <div className="stage">
+          <div className="stage-top">
+            <p className="eyebrow">* Phone — Sender</p>
+            <span className="stage-code-label">Live from device</span>
+          </div>
+          <p className="prompt">Enter the six-digit code shown on the laptop.</p>
+          <label className="sr-only" htmlFor="roomCode">
+            Room code
+          </label>
+          <input
+            id="roomCode"
+            className="code-input"
+            value={roomCode}
+            onChange={(event) => setRoomCode(event.target.value)}
+            placeholder="000000"
+            inputMode="numeric"
+            maxLength={6}
+          />
+          <button
+            type="button"
+            className="big-button"
+            onClick={() => startMirroring()}
+            disabled={roomCode.length !== 6}
+          >
+            Start mirroring →
+          </button>
+          <div className={`ticket ${isLive ? 'ticket-live' : ''}`}>
+            <span className="ticket-dot" aria-hidden="true" />
+            {status}
+          </div>
+          <p className="stage-note">You'll be asked to share a window or your camera to mirror.</p>
+        </div>
+        <aside className="view-aside">
+          <div className="plate">
+            <p className="plate-title">Broadcast</p>
+            <dl className="dl">
+              <div>
+                <dt>Source</dt>
+                <dd className={isBusy ? 'ok' : 'wait'}>{isLive ? 'Streaming' : isBusy ? 'Capturing' : 'Idle'}</dd>
+              </div>
+              <div>
+                <dt>Peer</dt>
+                <dd className="wait">Waiting</dd>
+              </div>
+              <div>
+                <dt>Transport</dt>
+                <dd>WebRTC</dd>
+              </div>
+            </dl>
+          </div>
+          <button type="button" className="back-link" onClick={onExit}>
+            ← Back to roles
+          </button>
+        </aside>
+      </section>
+      <Footer />
+    </main>
   );
 }
 
