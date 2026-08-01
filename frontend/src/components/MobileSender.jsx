@@ -18,6 +18,24 @@ function MobileSender({ onExit }) {
   const nativePeerRef = useRef(false);
   const isIOSNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
+  const isStandalone =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(display-mode: standalone)').matches;
+  const iosVersion = (() => {
+    const match = /iPhone OS (\d+)[_.](\d+)/.exec(navigator.userAgent);
+    return match ? `${match[1]}.${match[2]}` : null;
+  })();
+  const hasDisplayMedia = Boolean(window.navigator?.mediaDevices?.getDisplayMedia);
+  const shareCapability =
+    Capacitor.isNativePlatform()
+      ? null
+      : !hasDisplayMedia
+        ? `Screen sharing is unavailable here${iosVersion ? ` (iOS ${iosVersion})` : ''} \u2014 open in Safari, iOS 26+.`
+        : isStandalone
+          ? 'Standalone mode may block screen sharing \u2014 open this app in a Safari tab instead.'
+          : null;
+
   const getScreenStream = async () => {
     if (Capacitor.isNativePlatform()) {
       // Android native WebView: no getDisplayMedia. Screen sharing on Android
@@ -33,14 +51,7 @@ function MobileSender({ onExit }) {
       }
     }
 
-    const isStandalone =
-      window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-    const iosVersion = (() => {
-      const match = /iPhone OS (\d+)[_.](\d+)/.exec(navigator.userAgent);
-      return match ? `${match[1]}.${match[2]}` : null;
-    })();
-
-    if (window.navigator.mediaDevices?.getDisplayMedia) {
+    if (hasDisplayMedia) {
       try {
         const stream = await window.navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
         setSourceNote('Sharing screen');
@@ -394,6 +405,7 @@ function MobileSender({ onExit }) {
     <main className="app view">
       <Navbar onExit={onExit} />
       <main className="page">
+        {shareCapability && <div className="stage-note">{shareCapability}</div>}
         <section className="panel-wrap">
           <div className="panel">
             <div className="panel-header">
