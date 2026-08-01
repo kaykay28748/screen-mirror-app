@@ -124,7 +124,27 @@ create `frontend/.env`:
 VITE_SOCKET_URL=http://localhost:5000
 ```
 
-ICE servers (TURN/STUN) are configured in `frontend/src/config.js`.
+### ICE servers (STUN / TURN)
+
+ICE servers are configured with build-time env vars in `frontend/.env`
+(consumed by `frontend/src/config.js`):
+
+- `VITE_STUN_URLS` — comma-separated STUN servers. Defaults to Google's public
+  server: `stun:stun.l.google.com:19302`.
+- `VITE_TURN_URLS`, `VITE_TURN_USERNAME`, `VITE_TURN_CREDENTIAL` — optional
+  TURN relay, used when peers are behind strict firewalls/NATs that STUN can't
+  get through (e.g. cross-network mobile → desktop). Provide the username and
+  credential issued by your TURN provider.
+
+```
+VITE_STUN_URLS=stun:stun.l.google.com:19302
+VITE_TURN_URLS=turn:your-relay.example.com:3478
+VITE_TURN_USERNAME=user
+VITE_TURN_CREDENTIAL=pass
+```
+
+Because these are `VITE_*` variables, they are baked into the bundle at build
+time — rebuild (`npm run build`) after changing them.
 
 ### 3. Try it
 
@@ -184,8 +204,11 @@ screen-mirror-app/
   native bridge (Android `MediaProjection`, iOS `ReplayKit`) sits behind the
   `getScreenStream()` seam in `MobileSender.jsx` and will unlock true screen
   capture on device builds.
+- [x] **TURN relay support** — optional TURN is now configurable at build time
+  via `VITE_TURN_URLS` / `VITE_TURN_USERNAME` / `VITE_TURN_CREDENTIAL`
+  (see "ICE servers" above) for reliable cross-network mirroring behind strict
+  NATs.
 - [ ] Room expiry + presence (auto-close empty codes).
-- [ ] Optional low-latency relay fallback for hostile NATs.
 
 ## Design
 
