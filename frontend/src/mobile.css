@@ -24,8 +24,8 @@
     display: none;
   }
 
-  .nav-links .nav-link {
-    padding: 8px 8px;
+  .navbar .nav-links {
+    display: none;
   }
 
   .hero {
