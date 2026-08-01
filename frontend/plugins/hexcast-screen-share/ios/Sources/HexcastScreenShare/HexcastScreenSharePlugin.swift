@@ -195,7 +195,7 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
         }
         let mLineIndex = (call.options["sdpMLineIndex"] as? Int) ?? 0
         let mid = call.options["sdpMid"] as? String
-        peerConnection.add(RTCIceCandidate(sdp: sdp, sdpMLineIndex: mLineIndex, sdpMid: mid)) { error in
+        peerConnection.add(RTCIceCandidate(sdp: sdp, sdpMLineIndex: Int32(mLineIndex), sdpMid: mid)) { error in
             if let error {
                 call.reject("Unable to add ICE candidate: \(error.localizedDescription)")
             } else {
@@ -224,7 +224,7 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
         for sender in peerConnection.senders {
             guard sender.track != nil else { continue }
             let parameters = sender.parameters
-            parameters.encodings?.forEach { encoding in
+            parameters.encodings.forEach { encoding in
                 encoding.maxBitrateBps = 4_000_000
                 encoding.maxFramerate = 30
             }
@@ -250,9 +250,9 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
 // MARK: - RTCPeerConnectionDelegate
 
 extension HexcastScreenSharePlugin: RTCPeerConnectionDelegate {
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCIceConnectionState) {
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didChangeIceConnectionState newState: RTCIceConnectionState) {
         let state: String
-        switch stateChanged {
+        switch newState {
         case .new: state = "new"
         case .checking: state = "checking"
         case .connected: state = "connected"
@@ -266,10 +266,10 @@ extension HexcastScreenSharePlugin: RTCPeerConnectionDelegate {
         notifyListeners("connectionstate", data: ["state": state])
     }
 
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerateIceCandidate candidate: RTCIceCandidate) {
         var payload: [String: Any] = [
             "candidate": candidate.sdp,
-            "sdpMLineIndex": candidate.sdpMLineIndex
+            "sdpMLineIndex": Int(candidate.sdpMLineIndex)
         ]
         if let mid = candidate.sdpMid {
             payload["sdpMid"] = mid
@@ -277,12 +277,11 @@ extension HexcastScreenSharePlugin: RTCPeerConnectionDelegate {
         notifyListeners("icecandidate", data: ["candidate": payload])
     }
 
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didChangeSignalingState stateChanged: RTCSignalingState) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didAddStream stream: RTCMediaStream) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemoveStream stream: RTCMediaStream) {}
     public func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCSignalingState) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpSender: RTCRtpSender) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didChangeIceGatheringState newState: RTCIceGatheringState) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemoveIceCandidates candidates: [RTCIceCandidate]) {}
     public func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didStartReceivingOn transceiver: RTCRtpTransceiver) {}
 }
