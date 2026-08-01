@@ -1,7 +1,18 @@
 .app {
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.shell {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding-left: clamp(16px, 4vw, 28px);
+  padding-right: clamp(16px, 4vw, 28px);
 }
 
 /* ---------- Navbar ---------- */
@@ -10,15 +21,21 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 28px;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 14px 0;
   background: rgba(9, 9, 11, 0.72);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-bottom: 1px solid var(--border);
+}
+
+.navbar .shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .brand {
@@ -95,14 +112,16 @@
 /* ---------- Hero ---------- */
 
 .hero {
+  width: 100%;
+  max-width: 100%;
+  padding: 110px 0 64px;
+  text-align: center;
+}
+
+.hero .shell {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 110px 24px 64px;
-  text-align: center;
 }
 
 .eyebrow {
@@ -145,9 +164,8 @@
 
 .role-section {
   width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 8px 24px;
+  max-width: 100%;
+  padding: 8px 0;
 }
 
 .role-grid {
@@ -232,9 +250,8 @@
 
 .how {
   width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 72px 24px 96px;
+  max-width: 100%;
+  padding: 72px 0 96px;
 }
 
 .how-grid {
@@ -288,12 +305,15 @@
 /* ---------- View panel ---------- */
 
 .panel-wrap {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
   flex: 1;
   width: 100%;
-  padding: 56px 24px;
+  max-width: 100%;
+  padding: 56px 0;
+}
+
+.panel-wrap .shell {
+  display: flex;
+  justify-content: center;
 }
 
 .panel {
@@ -596,14 +616,21 @@
 /* ---------- Footer ---------- */
 
 .footer {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted-2);
+}
+
+.footer .shell {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 20px 28px;
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-  color: var(--muted-2);
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 /* ---------- Utility ---------- */
@@ -624,7 +651,8 @@
 
 @media (max-width: 640px) {
   .navbar {
-    padding: 12px 18px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 
   .nav-chip {
@@ -632,7 +660,7 @@
   }
 
   .hero {
-    padding: 72px 20px 44px;
+    padding: 72px 0 44px;
   }
 
   .role-grid {
@@ -640,7 +668,7 @@
   }
 
   .how {
-    padding: 56px 20px 72px;
+    padding: 56px 0 72px;
   }
 
   .how-grid {
@@ -649,7 +677,7 @@
 
   .panel-wrap {
     align-items: center;
-    padding: 32px 18px;
+    padding: 32px 0;
   }
 
   .panel {

@@ -135,7 +135,8 @@ function LaptopReceiver({ onExit }) {
     <main className="app view">
       <Navbar onExit={onExit} />
       <section className="panel-wrap">
-        <div className="panel">
+        <div className="shell">
+          <div className="panel">
           <div className="panel-header">
             <div>
               <p className="panel-eyebrow">Receiver</p>
@@ -165,6 +166,7 @@ function LaptopReceiver({ onExit }) {
                 <span className="video-idle-sub">The sender's stream will appear here</span>
               </div>
             ) : null}
+          </div>
           </div>
         </div>
       </section>

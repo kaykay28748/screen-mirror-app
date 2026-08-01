@@ -173,7 +173,8 @@ function MobileSender({ onExit }) {
     <main className="app view">
       <Navbar onExit={onExit} />
       <section className="panel-wrap">
-        <div className="panel">
+        <div className="shell">
+          <div className="panel">
           <div className="panel-header">
             <div>
               <p className="panel-eyebrow">Sender</p>
@@ -206,6 +207,7 @@ function MobileSender({ onExit }) {
             <StatusPill text={status} />
           </div>
           <p className="stage-note">You'll be asked to share a window or camera to begin.</p>
+          </div>
         </div>
       </section>
       <Footer />
