@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { SOCKET_URL, ICE_SERVERS } from '../config';
-import { Navbar, Footer, StatusPill } from './Chrome';
+import { Navbar, Footer, StatusTag, RollText } from './Chrome';
 
 function LaptopReceiver({ onExit }) {
   const [roomCode] = useState(() => String(Math.floor(100000 + Math.random() * 900000)));
@@ -134,20 +134,23 @@ function LaptopReceiver({ onExit }) {
   return (
     <main className="app view">
       <Navbar onExit={onExit} />
-      <section className="panel-wrap">
-        <div className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="panel-eyebrow">Receiver</p>
-              <h2 className="panel-title">Share this code</h2>
-            </div>
-            <StatusPill live={isLive} text={isConnected ? status : 'Connecting…'} />
-          </div>
-          <div className="code-box">
-            <div>
-              <p className="code-label">Room code</p>
-              <p className="code-value">{roomCode}</p>
-            </div>
+      <section className="view-layout">
+        <div className="view-main">
+          <p className="micro view-eyebrow">Receiver — Session</p>
+          <h2 className="view-title">Share this code</h2>
+          <div className="code-block">
+            <span className="micro code-label">Room code</span>
+            <span className="code-digits">
+              {roomCode.split('').map((digit, index) => (
+                <span
+                  className="code-digit"
+                  key={index}
+                  style={{ animationDelay: `${index * 40}ms` }}
+                >
+                  {digit}
+                </span>
+              ))}
+            </span>
             <button
               type="button"
               className={`copy-btn ${copied ? 'copied' : ''}`}
@@ -160,13 +163,34 @@ function LaptopReceiver({ onExit }) {
             <video ref={videoRef} autoPlay playsInline muted className="video" />
             {!isLive ? (
               <div className="video-idle">
-                <span className="rings" aria-hidden="true" />
                 <span className="video-idle-main">Awaiting signal</span>
-                <span className="video-idle-sub">The sender's stream will appear here</span>
+                <span className="video-idle-sub">The sender's stream appears here</span>
               </div>
             ) : null}
           </div>
         </div>
+        <aside className="view-rail">
+          <p className="micro rail-title">Session</p>
+          <dl className="meta-list">
+            <div className="meta-row">
+              <dt className="meta-key">Server</dt>
+              <dd className="meta-val">
+                <RollText text={isConnected ? 'Linked' : 'Offline'} />
+              </dd>
+            </div>
+            <div className="meta-row">
+              <dt className="meta-key">Peer</dt>
+              <dd className="meta-val">
+                <RollText text={isLive ? 'Streaming' : 'Waiting'} />
+              </dd>
+            </div>
+            <div className="meta-row">
+              <dt className="meta-key">Transport</dt>
+              <dd className="meta-val">WebRTC</dd>
+            </div>
+          </dl>
+          <StatusTag live={isLive} text={isConnected ? status : 'Connecting…'} />
+        </aside>
       </section>
       <Footer />
     </main>

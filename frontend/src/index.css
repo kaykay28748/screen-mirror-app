@@ -1,26 +1,19 @@
 :root {
-  --bg: #09090b;
-  --surface: #121214;
-  --surface-2: #161619;
-  --surface-3: #1c1c20;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.1);
-  --text: #fafafa;
-  --text-2: #d4d4d8;
-  --muted: #a1a1aa;
-  --muted-2: #71717a;
-  --accent: #6366f1;
-  --accent-2: #a78bfa;
-  --accent-soft: rgba(99, 102, 241, 0.12);
-  --success: #34d399;
-  --danger: #f87171;
-  --gradient-accent: linear-gradient(135deg, #6366f1, #8b5cf6);
-  --gradient-text: linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%);
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --radius: 12px;
-  --radius-sm: 8px;
-  --font-display: 'Space Grotesk', Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --bg: #0a0a0a;
+  --ash: #161616;
+  --slate: #222222;
+  --chalk: #f9f9f9;
+  --line: rgba(249, 249, 249, 0.12);
+  --line-faint: rgba(249, 249, 249, 0.04);
+  --muted: rgba(249, 249, 249, 0.55);
+  --faint: rgba(249, 249, 249, 0.32);
+
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', Times, serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --ease-cine: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-elastic: cubic-bezier(0.36, 0.07, 0.19, 0.97);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -41,14 +34,21 @@ body,
 
 body {
   min-width: 320px;
-  background:
-    radial-gradient(900px 480px at 80% -10%, rgba(99, 102, 241, 0.1), transparent 60%),
-    radial-gradient(700px 420px at 0% 110%, rgba(139, 92, 246, 0.08), transparent 60%),
-    var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--chalk);
+  font-family: var(--font-mono);
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.6;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 h1,
@@ -70,7 +70,21 @@ input {
   font: inherit;
 }
 
+button {
+  color: inherit;
+}
+
 ::selection {
-  background: rgba(99, 102, 241, 0.35);
-  color: #fff;
+  background: var(--chalk);
+  color: var(--bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

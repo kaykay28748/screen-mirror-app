@@ -2,7 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import LaptopReceiver from './components/LaptopReceiver';
 import MobileSender from './components/MobileSender';
-import { Navbar, Footer, LaptopIcon, PhoneIcon } from './components/Chrome';
+import { Navbar, Footer } from './components/Chrome';
 
 function App() {
   const [activeView, setActiveView] = useState('home');
@@ -19,64 +19,66 @@ function App() {
     <main className="app">
       <Navbar />
       <section className="hero">
-        <span className="eyebrow">Peer-to-peer screen mirroring</span>
-        <h1 className="hero-title">
-          Mirror any screen,
-          <br />
-          anywhere.
-        </h1>
-        <p className="hero-sub">
-          Point a phone at a laptop — or a laptop at a phone. One six-digit code
-          connects them over a private, peer-to-peer video link. No accounts, no
-          downloads.
-        </p>
+        <div className="hero-main">
+          <p className="micro hero-micro">Peer-to-peer casting</p>
+          <h1 className="hero-title">
+            Cast a screen,
+            <br />
+            <em>anywhere</em>,
+            <br />
+            in seconds.
+          </h1>
+          <p className="hero-sub">
+            One six-digit code links a phone and a laptop over a direct, private
+            WebRTC channel. No accounts, no cloud, no middleman.
+          </p>
+        </div>
+        <aside className="hero-rail">
+          <p className="micro">Direct P2P</p>
+          <p className="micro">No accounts</p>
+          <p className="micro">Six-digit pairing</p>
+        </aside>
       </section>
       <section className="role-section">
-        <div className="role-grid">
-          <button type="button" className="role-card" onClick={() => setActiveView('laptop')}>
-            <span className="role-card-icon">
-              <LaptopIcon />
+        <div className="role-list">
+          <button type="button" className="role-row" onClick={() => setActiveView('laptop')}>
+            <span className="role-idx">01</span>
+            <span className="role-main">
+              <span className="role-title">Laptop</span>
+              <span className="role-sub">Receive a screen</span>
             </span>
-            <span className="role-card-body">
-              <span className="role-card-title">I&apos;m a laptop</span>
-              <span className="role-card-sub">Receive a screen</span>
-            </span>
-            <span className="role-card-arrow" aria-hidden="true">
+            <span className="role-arrow" aria-hidden="true">
               →
             </span>
           </button>
-          <button type="button" className="role-card" onClick={() => setActiveView('phone')}>
-            <span className="role-card-icon">
-              <PhoneIcon />
+          <button type="button" className="role-row" onClick={() => setActiveView('phone')}>
+            <span className="role-idx">02</span>
+            <span className="role-main">
+              <span className="role-title">Phone</span>
+              <span className="role-sub">Send a screen</span>
             </span>
-            <span className="role-card-body">
-              <span className="role-card-title">I&apos;m a phone</span>
-              <span className="role-card-sub">Send a screen</span>
-            </span>
-            <span className="role-card-arrow" aria-hidden="true">
+            <span className="role-arrow" aria-hidden="true">
               →
             </span>
           </button>
         </div>
-      </section>
-      <section className="how">
-        <div className="how-grid">
-          <div className="how-card">
-            <span className="step-num">1</span>
-            <p className="step-title">Laptop prints a code</p>
-            <p className="step-text">Six random digits, refreshed per session.</p>
-          </div>
-          <div className="how-card">
-            <span className="step-num">2</span>
-            <p className="step-title">Phone dials the code</p>
-            <p className="step-text">They pair over a private signaling channel.</p>
-          </div>
-          <div className="how-card">
-            <span className="step-num">3</span>
-            <p className="step-title">Video flows direct</p>
-            <p className="step-text">Peer-to-peer WebRTC — the server never sees it.</p>
-          </div>
-        </div>
+        <aside className="how-col">
+          <p className="micro">How it works</p>
+          <ol className="steps">
+            <li className="step">
+              <span className="step-no">01</span>
+              <p className="step-body">Laptop prints a six-digit code.</p>
+            </li>
+            <li className="step">
+              <span className="step-no">02</span>
+              <p className="step-body">Phone dials the code to pair.</p>
+            </li>
+            <li className="step">
+              <span className="step-no">03</span>
+              <p className="step-body">Video flows device-to-device.</p>
+            </li>
+          </ol>
+        </aside>
       </section>
       <Footer />
     </main>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { Capacitor } from '@capacitor/core';
 import { SOCKET_URL, ICE_SERVERS } from '../config';
-import { Navbar, Footer, StatusPill } from './Chrome';
+import { Navbar, Footer, StatusTag, RollText } from './Chrome';
 
 function MobileSender({ onExit }) {
   const [roomCode, setRoomCode] = useState('');
@@ -168,21 +168,17 @@ function MobileSender({ onExit }) {
   }, []);
 
   const isLive = status === 'Connected';
+  const isBusy = status !== 'Enter the room code to start';
 
   return (
     <main className="app view">
       <Navbar onExit={onExit} />
-      <section className="panel-wrap">
-        <div className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="panel-eyebrow">Sender</p>
-              <h2 className="panel-title">Join a room</h2>
-            </div>
-            <StatusPill live={isLive} text={isLive ? 'Live' : 'Standby'} />
-          </div>
-          <p className="prompt">Enter the six-digit code from the laptop.</p>
-          <label className="sr-only" htmlFor="roomCode">
+      <section className="view-layout">
+        <div className="view-main">
+          <p className="micro view-eyebrow">Sender — Session</p>
+          <h2 className="view-title">Join a room</h2>
+          <p className="prompt">Enter the six-digit code shown on the laptop.</p>
+          <label className="micro code-label" htmlFor="roomCode">
             Room code
           </label>
           <input
@@ -196,17 +192,38 @@ function MobileSender({ onExit }) {
           />
           <button
             type="button"
-            className="big-button"
+            className="start-button"
             onClick={() => startMirroring()}
             disabled={roomCode.length !== 6}
           >
             Start mirroring
           </button>
-          <div className="ticket-row">
-            <StatusPill text={status} />
+          <div className="status-row">
+            <StatusTag live={isLive} text={status} />
           </div>
-          <p className="stage-note">You'll be asked to share a window or camera to begin.</p>
+          <p className="view-note">You'll be asked to share a window or camera to begin.</p>
         </div>
+        <aside className="view-rail">
+          <p className="micro rail-title">Broadcast</p>
+          <dl className="meta-list">
+            <div className="meta-row">
+              <dt className="meta-key">Source</dt>
+              <dd className="meta-val">
+                <RollText text={isLive ? 'Streaming' : isBusy ? 'Capturing' : 'Idle'} />
+              </dd>
+            </div>
+            <div className="meta-row">
+              <dt className="meta-key">Peer</dt>
+              <dd className="meta-val">
+                <RollText text={isLive ? 'Linked' : 'Waiting'} />
+              </dd>
+            </div>
+            <div className="meta-row">
+              <dt className="meta-key">Transport</dt>
+              <dd className="meta-val">WebRTC</dd>
+            </div>
+          </dl>
+        </aside>
       </section>
       <Footer />
     </main>

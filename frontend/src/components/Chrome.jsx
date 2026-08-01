@@ -16,23 +16,12 @@ export function Navbar({ onExit }) {
             <path d="M12 15.5v4M8.5 19.5h7" />
           </svg>
         </span>
-        Screen Mirror
+        <span className="brand-word">Hexcast</span>
       </span>
       <div className="nav-group">
         {onExit ? (
           <button type="button" className="back-button" onClick={onExit}>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            Back
+            ← Back
           </button>
         ) : null}
         <span className="nav-chip">P2P · WebRTC</span>
@@ -41,54 +30,30 @@ export function Navbar({ onExit }) {
   );
 }
 
-export function StatusPill({ live, text }) {
+export function StatusTag({ live, text }) {
   return (
-    <span className={`status ${live ? 'status-live' : ''}`}>
-      <span className="status-dot" aria-hidden="true" />
+    <span className={`status-tag ${live ? 'status-tag-live' : ''}`}>
+      <span className="status-tag-dot" aria-hidden="true" />
       {text}
     </span>
   );
 }
 
-export function LaptopIcon() {
+export function RollText({ text }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3.5" y="4.5" width="17" height="11" rx="2" />
-      <path d="M2.5 19.5h19" />
-    </svg>
-  );
-}
-
-export function PhoneIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
-      <path d="M11 18.5h2" />
-    </svg>
+    <span className="roll" aria-live="polite">
+      <span className="roll-inner" key={text}>
+        {text}
+      </span>
+    </span>
   );
 }
 
 export function Footer() {
   return (
     <footer className="footer">
-      <span>© 2026 Screen Mirror</span>
-      <span>Video never touches the server.</span>
+      <span>© 2026 Hexcast</span>
+      <span>Video never touches the server</span>
     </footer>
   );
 }
