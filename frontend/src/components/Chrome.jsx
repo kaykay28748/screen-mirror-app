@@ -1,48 +1,94 @@
-const MARQUEE_ITEMS = [
-  'Phone → Laptop',
-  'No app stores',
-  'Installable PWA',
-  'Peer-to-peer',
-  'One code. Anywhere.',
-];
-
-export function Masthead() {
+export function Navbar({ onExit }) {
   return (
-    <header className="masthead">
-      <div className="masthead-brand">
-        <span className="masthead-star" aria-hidden="true">
-          ✳
+    <header className="navbar">
+      <span className="brand">
+        <span className="brand-mark">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3.5" y="4.5" width="17" height="11" rx="2" />
+            <path d="M12 15.5v4M8.5 19.5h7" />
+          </svg>
         </span>
-        <span className="masthead-title">Screen Mirror</span>
+        Screen Mirror
+      </span>
+      <div className="nav-group">
+        {onExit ? (
+          <button type="button" className="back-button" onClick={onExit}>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Back
+          </button>
+        ) : null}
+        <span className="nav-chip">P2P · WebRTC</span>
       </div>
-      <div className="masthead-meta">Vol. 01 — Est. 2026</div>
-      <div className="masthead-meta masthead-meta-right">P2P / WebRTC</div>
     </header>
   );
 }
 
-export function Marquee() {
-  const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
-
+export function StatusPill({ live, text }) {
   return (
-    <div className="marquee" aria-hidden="true">
-      <div className="marquee-inner">
-        {items.map((item, index) => (
-          <span className="marquee-item" key={index}>
-            <span>{item}</span>
-            <span className="marquee-sep">*</span>
-          </span>
-        ))}
-      </div>
-    </div>
+    <span className={`status ${live ? 'status-live' : ''}`}>
+      <span className="status-dot" aria-hidden="true" />
+      {text}
+    </span>
+  );
+}
+
+export function LaptopIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3.5" y="4.5" width="17" height="11" rx="2" />
+      <path d="M2.5 19.5h19" />
+    </svg>
+  );
+}
+
+export function PhoneIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+      <path d="M11 18.5h2" />
+    </svg>
   );
 }
 
 export function Footer() {
   return (
     <footer className="footer">
-      <p>© 2026 Screen Mirror — a peer-to-peer mirroring experiment.</p>
-      <p>Video travels device-to-device. The signal server never sees the stream.</p>
+      <span>© 2026 Screen Mirror</span>
+      <span>Video never touches the server.</span>
     </footer>
   );
 }

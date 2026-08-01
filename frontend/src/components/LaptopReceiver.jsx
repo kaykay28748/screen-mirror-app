@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { SOCKET_URL, ICE_SERVERS } from '../config';
-import { Masthead, Marquee, Footer } from './Chrome';
+import { Navbar, Footer, StatusPill } from './Chrome';
 
 function LaptopReceiver({ onExit }) {
   const [roomCode] = useState(() => String(Math.floor(100000 + Math.random() * 900000)));
   const [status, setStatus] = useState('Waiting for phone...');
   const [isConnected, setIsConnected] = useState(false);
+  const [copied, setCopied] = useState(false);
   const videoRef = useRef(null);
   const socketRef = useRef(null);
   const peerConnectionRef = useRef(null);
@@ -120,55 +121,52 @@ function LaptopReceiver({ onExit }) {
 
   const isLive = status === 'Mirroring active!';
 
+  const handleCopy = () => {
+    navigator.clipboard
+      ?.writeText(roomCode)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1600);
+      })
+      .catch(() => {});
+  };
+
   return (
     <main className="app view">
-      <Masthead />
-      <Marquee />
-      <section className="view-grid">
-        <div className="stage">
-          <div className="stage-top">
-            <p className="eyebrow">* Laptop — Receiver</p>
-            <span className="stage-code-label">Room code</span>
+      <Navbar onExit={onExit} />
+      <section className="panel-wrap">
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <p className="panel-eyebrow">Receiver</p>
+              <h2 className="panel-title">Share this code</h2>
+            </div>
+            <StatusPill live={isLive} text={isConnected ? status : 'Connecting…'} />
           </div>
-          <div className="code-plate">
-            <span className="code-numeral">{roomCode}</span>
-          </div>
-          <div className={`ticket ${isLive ? 'ticket-live' : ''}`}>
-            <span className="ticket-dot" aria-hidden="true" />
-            {isConnected ? status : 'Connecting to server...'}
+          <div className="code-box">
+            <div>
+              <p className="code-label">Room code</p>
+              <p className="code-value">{roomCode}</p>
+            </div>
+            <button
+              type="button"
+              className={`copy-btn ${copied ? 'copied' : ''}`}
+              onClick={handleCopy}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
           </div>
           <div className="video-frame">
             <video ref={videoRef} autoPlay playsInline muted className="video" />
             {!isLive ? (
               <div className="video-idle">
-                <span>AWAITING SIGNAL</span>
-                <span className="video-idle-sub">The sender's stream appears here</span>
+                <span className="rings" aria-hidden="true" />
+                <span className="video-idle-main">Awaiting signal</span>
+                <span className="video-idle-sub">The sender's stream will appear here</span>
               </div>
             ) : null}
           </div>
         </div>
-        <aside className="view-aside">
-          <div className="plate">
-            <p className="plate-title">Session</p>
-            <dl className="dl">
-              <div>
-                <dt>Server</dt>
-                <dd className={isConnected ? 'ok' : 'bad'}>{isConnected ? 'Linked' : 'Offline'}</dd>
-              </div>
-              <div>
-                <dt>Peer</dt>
-                <dd className={isLive ? 'ok' : 'wait'}>{isLive ? 'Streaming' : 'Waiting'}</dd>
-              </div>
-              <div>
-                <dt>Transport</dt>
-                <dd>SRTP</dd>
-              </div>
-            </dl>
-          </div>
-          <button type="button" className="back-link" onClick={onExit}>
-            ← Back to roles
-          </button>
-        </aside>
       </section>
       <Footer />
     </main>

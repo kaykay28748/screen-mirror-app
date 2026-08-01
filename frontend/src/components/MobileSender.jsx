@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { Capacitor } from '@capacitor/core';
 import { SOCKET_URL, ICE_SERVERS } from '../config';
-import { Masthead, Marquee, Footer } from './Chrome';
+import { Navbar, Footer, StatusPill } from './Chrome';
 
 function MobileSender({ onExit }) {
   const [roomCode, setRoomCode] = useState('');
@@ -168,19 +168,20 @@ function MobileSender({ onExit }) {
   }, []);
 
   const isLive = status === 'Connected';
-  const isBusy = status !== 'Enter the room code to start';
 
   return (
     <main className="app view">
-      <Masthead />
-      <Marquee />
-      <section className="view-grid">
-        <div className="stage">
-          <div className="stage-top">
-            <p className="eyebrow">* Phone — Sender</p>
-            <span className="stage-code-label">Live from device</span>
+      <Navbar onExit={onExit} />
+      <section className="panel-wrap">
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <p className="panel-eyebrow">Sender</p>
+              <h2 className="panel-title">Join a room</h2>
+            </div>
+            <StatusPill live={isLive} text={isLive ? 'Live' : 'Standby'} />
           </div>
-          <p className="prompt">Enter the six-digit code shown on the laptop.</p>
+          <p className="prompt">Enter the six-digit code from the laptop.</p>
           <label className="sr-only" htmlFor="roomCode">
             Room code
           </label>
@@ -199,36 +200,13 @@ function MobileSender({ onExit }) {
             onClick={() => startMirroring()}
             disabled={roomCode.length !== 6}
           >
-            Start mirroring →
+            Start mirroring
           </button>
-          <div className={`ticket ${isLive ? 'ticket-live' : ''}`}>
-            <span className="ticket-dot" aria-hidden="true" />
-            {status}
+          <div className="ticket-row">
+            <StatusPill text={status} />
           </div>
-          <p className="stage-note">You'll be asked to share a window or your camera to mirror.</p>
+          <p className="stage-note">You'll be asked to share a window or camera to begin.</p>
         </div>
-        <aside className="view-aside">
-          <div className="plate">
-            <p className="plate-title">Broadcast</p>
-            <dl className="dl">
-              <div>
-                <dt>Source</dt>
-                <dd className={isBusy ? 'ok' : 'wait'}>{isLive ? 'Streaming' : isBusy ? 'Capturing' : 'Idle'}</dd>
-              </div>
-              <div>
-                <dt>Peer</dt>
-                <dd className="wait">Waiting</dd>
-              </div>
-              <div>
-                <dt>Transport</dt>
-                <dd>WebRTC</dd>
-              </div>
-            </dl>
-          </div>
-          <button type="button" className="back-link" onClick={onExit}>
-            ← Back to roles
-          </button>
-        </aside>
       </section>
       <Footer />
     </main>

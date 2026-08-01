@@ -2,7 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import LaptopReceiver from './components/LaptopReceiver';
 import MobileSender from './components/MobileSender';
-import { Masthead, Marquee, Footer } from './components/Chrome';
+import { Navbar, Footer, LaptopIcon, PhoneIcon } from './components/Chrome';
 
 function App() {
   const [activeView, setActiveView] = useState('home');
@@ -17,63 +17,66 @@ function App() {
 
   return (
     <main className="app">
-      <Masthead />
-      <Marquee />
-      <section className="home-grid">
-        <div className="home-main">
-          <p className="eyebrow">* Choose your role to begin</p>
-          <h1 className="display">
-            Mirror,<br />
-            any screen,<br />
-            <em>anywhere.</em>
-          </h1>
-          <p className="lede">
-            Point a phone at a laptop, or a laptop at a phone. One six-digit code,
-            one live peer-to-peer link — no accounts, no downloads.
-          </p>
-          <div className="role-list">
-            <button type="button" className="role-button" onClick={() => setActiveView('laptop')}>
-              <span className="role-index">01</span>
-              <span className="role-label">
-                I am a laptop
-                <em>Receive a screen</em>
-              </span>
-              <span className="role-arrow" aria-hidden="true">
-                →
-              </span>
-            </button>
-            <button type="button" className="role-button" onClick={() => setActiveView('phone')}>
-              <span className="role-index">02</span>
-              <span className="role-label">
-                I am a phone
-                <em>Send a screen</em>
-              </span>
-              <span className="role-arrow" aria-hidden="true">
-                →
-              </span>
-            </button>
+      <Navbar />
+      <section className="hero">
+        <span className="eyebrow">Peer-to-peer screen mirroring</span>
+        <h1 className="hero-title">
+          Mirror any screen,
+          <br />
+          anywhere.
+        </h1>
+        <p className="hero-sub">
+          Point a phone at a laptop — or a laptop at a phone. One six-digit code
+          connects them over a private, peer-to-peer video link. No accounts, no
+          downloads.
+        </p>
+      </section>
+      <section className="role-section">
+        <div className="role-grid">
+          <button type="button" className="role-card" onClick={() => setActiveView('laptop')}>
+            <span className="role-card-icon">
+              <LaptopIcon />
+            </span>
+            <span className="role-card-body">
+              <span className="role-card-title">I&apos;m a laptop</span>
+              <span className="role-card-sub">Receive a screen</span>
+            </span>
+            <span className="role-card-arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+          <button type="button" className="role-card" onClick={() => setActiveView('phone')}>
+            <span className="role-card-icon">
+              <PhoneIcon />
+            </span>
+            <span className="role-card-body">
+              <span className="role-card-title">I&apos;m a phone</span>
+              <span className="role-card-sub">Send a screen</span>
+            </span>
+            <span className="role-card-arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+        </div>
+      </section>
+      <section className="how">
+        <div className="how-grid">
+          <div className="how-card">
+            <span className="step-num">1</span>
+            <p className="step-title">Laptop prints a code</p>
+            <p className="step-text">Six random digits, refreshed per session.</p>
+          </div>
+          <div className="how-card">
+            <span className="step-num">2</span>
+            <p className="step-title">Phone dials the code</p>
+            <p className="step-text">They pair over a private signaling channel.</p>
+          </div>
+          <div className="how-card">
+            <span className="step-num">3</span>
+            <p className="step-title">Video flows direct</p>
+            <p className="step-text">Peer-to-peer WebRTC — the server never sees it.</p>
           </div>
         </div>
-        <aside className="home-aside">
-          <div className="plate">
-            <p className="plate-title">How it works</p>
-            <ol className="steps">
-              <li>
-                <span className="step-no">1</span>
-                <span className="step-text">The laptop prints a six-digit code.</span>
-              </li>
-              <li>
-                <span className="step-no">2</span>
-                <span className="step-text">The phone dials the code.</span>
-              </li>
-              <li>
-                <span className="step-no">3</span>
-                <span className="step-text">Video flows straight between devices.</span>
-              </li>
-            </ol>
-            <p className="plate-note">Works in any modern browser. Installable on iOS &amp; Android.</p>
-          </div>
-        </aside>
       </section>
       <Footer />
     </main>
