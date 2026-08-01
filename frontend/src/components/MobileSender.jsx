@@ -5,7 +5,7 @@ import { SOCKET_URL, ICE_SERVERS } from '../config';
 import { Navbar, Footer, StatusPill } from './Chrome';
 import { ScreenShare } from '../native/screenShare';
 
-function MobileSender({ onExit }) {
+function MobileSender({ onExit, onNavigate }) {
   const [roomCode, setRoomCode] = useState('');
   const [status, setStatus] = useState('Enter the room code to start');
   const [isActive, setIsActive] = useState(false);
@@ -18,10 +18,7 @@ function MobileSender({ onExit }) {
   const nativePeerRef = useRef(false);
   const isIOSNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
-  const isStandalone =
-    typeof window !== 'undefined' &&
-    window.matchMedia &&
-    window.matchMedia('(display-mode: standalone)').matches;
+  const isIosBrowser = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const iosVersion = (() => {
     const match = /iPhone OS (\d+)[_.](\d+)/.exec(navigator.userAgent);
     return match ? `${match[1]}.${match[2]}` : null;
@@ -31,10 +28,8 @@ function MobileSender({ onExit }) {
     Capacitor.isNativePlatform()
       ? null
       : !hasDisplayMedia
-        ? `Screen sharing is unavailable here${iosVersion ? ` (iOS ${iosVersion})` : ''} \u2014 open in Safari, iOS 26+.`
-        : isStandalone
-          ? 'Standalone mode may block screen sharing \u2014 open this app in a Safari tab instead.'
-          : null;
+        ? `Screen sharing isn\u2019t supported${isIosBrowser && iosVersion ? ` on iOS ${iosVersion}` : ' in this browser'} \u2014 Apple never enabled it on iPhone/iPad Safari, so you get the camera instead.`
+        : null;
 
   const getScreenStream = async () => {
     if (Capacitor.isNativePlatform()) {
@@ -68,10 +63,7 @@ function MobileSender({ onExit }) {
       }
     } else {
       const osNote = iosVersion ? `iOS ${iosVersion}` : 'this browser';
-      const modeNote = isStandalone
-        ? '; open in Safari tab, not the home-screen icon'
-        : '';
-      setSourceNote(`Can\u2019t share screen on ${osNote}${modeNote} \u2014 using camera`);
+      setSourceNote(`Can\u2019t share screen on ${osNote} \u2014 using camera`);
     }
 
     try {
@@ -403,7 +395,7 @@ function MobileSender({ onExit }) {
 
   return (
     <main className="app view">
-      <Navbar onExit={onExit} />
+      <Navbar onExit={onExit} onNavigate={onNavigate} />
       <main className="page">
         {shareCapability && <div className="stage-note">{shareCapability}</div>}
         <section className="panel-wrap">
@@ -448,7 +440,7 @@ function MobileSender({ onExit }) {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </main>
   );
 }

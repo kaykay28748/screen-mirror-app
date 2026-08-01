@@ -1,4 +1,23 @@
-export function Navbar({ onExit }) {
+function NavLinks({ onNavigate }) {
+  if (!onNavigate) {
+    return null;
+  }
+  return (
+    <div className="nav-links">
+      <button type="button" className="nav-link" onClick={() => onNavigate('about')}>
+        About
+      </button>
+      <button type="button" className="nav-link" onClick={() => onNavigate('faq')}>
+        FAQ
+      </button>
+      <button type="button" className="nav-link" onClick={() => onNavigate('privacy')}>
+        Privacy
+      </button>
+    </div>
+  );
+}
+
+export function Navbar({ onExit, onNavigate }) {
   return (
     <header className="navbar">
       <div className="shell">
@@ -20,6 +39,7 @@ export function Navbar({ onExit }) {
           Hexcast
         </span>
         <div className="nav-group">
+          <NavLinks onNavigate={onNavigate} />
           {onExit ? (
             <button type="button" className="back-button" onClick={onExit}>
               <svg
@@ -86,21 +106,24 @@ export function PhoneIcon() {
   );
 }
 
-export function Footer() {
+export function Footer({ onNavigate }) {
   return (
     <footer className="footer">
       <div className="shell">
         <span>
           © 2026 Hexcast — built by <span className="footer-name">Prince Kay</span>
         </span>
-        <a
-          className="footer-link"
-          href="https://github.com/kaykay28748/screen-mirror-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ★ Star on GitHub
-        </a>
+        <div className="footer-links">
+          <NavLinks onNavigate={onNavigate} />
+          <a
+            className="nav-link footer-link-anchor"
+            href="https://github.com/kaykay28748/screen-mirror-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ★ GitHub
+          </a>
+        </div>
       </div>
     </footer>
   );

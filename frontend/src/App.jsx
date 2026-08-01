@@ -2,22 +2,37 @@ import { useState } from 'react';
 import './App.css';
 import LaptopReceiver from './components/LaptopReceiver';
 import MobileSender from './components/MobileSender';
+import { AboutPage, FaqPage, PrivacyPage } from './components/InfoPages';
 import { Navbar, Footer, LaptopIcon, PhoneIcon } from './components/Chrome';
 
 function App() {
   const [activeView, setActiveView] = useState('home');
 
+  const goHome = () => setActiveView('home');
+
   if (activeView === 'laptop') {
-    return <LaptopReceiver onExit={() => setActiveView('home')} />;
+    return <LaptopReceiver onExit={goHome} onNavigate={setActiveView} />;
   }
 
   if (activeView === 'phone') {
-    return <MobileSender onExit={() => setActiveView('home')} />;
+    return <MobileSender onExit={goHome} onNavigate={setActiveView} />;
+  }
+
+  if (activeView === 'about') {
+    return <AboutPage onExit={goHome} onNavigate={setActiveView} />;
+  }
+
+  if (activeView === 'faq') {
+    return <FaqPage onExit={goHome} onNavigate={setActiveView} />;
+  }
+
+  if (activeView === 'privacy') {
+    return <PrivacyPage onExit={goHome} onNavigate={setActiveView} />;
   }
 
   return (
     <main className="app">
-      <Navbar />
+      <Navbar onNavigate={setActiveView} />
       <main className="page">
         <section className="hero">
           <span className="eyebrow">Peer-to-peer screen mirroring</span>
@@ -98,7 +113,7 @@ function App() {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer onNavigate={setActiveView} />
     </main>
   );
 }

@@ -20,6 +20,14 @@
     padding-bottom: 12px;
   }
 
+  .nav-chip {
+    display: none;
+  }
+
+  .nav-links .nav-link {
+    padding: 8px 8px;
+  }
+
   .hero {
     padding: 56px 0 40px;
   }

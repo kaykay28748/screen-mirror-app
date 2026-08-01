@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { SOCKET_URL, ICE_SERVERS } from '../config';
 import { Navbar, Footer, StatusPill } from './Chrome';
 
-function LaptopReceiver({ onExit }) {
+function LaptopReceiver({ onExit, onNavigate }) {
   const [roomCode] = useState(() => String(Math.floor(100000 + Math.random() * 900000)));
   const [status, setStatus] = useState('Waiting for phone...');
   const [isConnected, setIsConnected] = useState(false);
@@ -149,7 +149,7 @@ function LaptopReceiver({ onExit }) {
 
   return (
     <main className="app view">
-      <Navbar onExit={onExit} />
+      <Navbar onExit={onExit} onNavigate={onNavigate} />
       <main className="page">
         <section className="panel-wrap">
           <div className="panel">
@@ -188,7 +188,7 @@ function LaptopReceiver({ onExit }) {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </main>
   );
 }
