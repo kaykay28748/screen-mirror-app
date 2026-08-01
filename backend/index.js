@@ -7,6 +7,14 @@ const app = express();
 
 app.use(cors({ origin: '*' }));
 
+app.get('/', (_req, res) => {
+  res.json({
+    service: 'Hexcast signaling server',
+    status: 'ok',
+    health: '/health',
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
