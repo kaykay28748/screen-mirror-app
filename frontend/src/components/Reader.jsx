@@ -150,6 +150,7 @@ export default function Reader({ onExit, onNavigate }) {
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState('');
+  const [errorStack, setErrorStack] = useState('');
   const [speechSupported] = useState(() => Boolean(window.speechSynthesis));
 
   const fileInputRef = useRef(null);
@@ -390,6 +391,7 @@ export default function Reader({ onExit, onNavigate }) {
     setDoc(null);
     setCurrentPage(0);
     setError('');
+    setErrorStack('');
   }
 
   async function handleFile(file) {
@@ -401,6 +403,7 @@ export default function Reader({ onExit, onNavigate }) {
       return;
     }
     setError('');
+    setErrorStack('');
     setLoading(true);
     try {
       const rawPages = ext === 'pdf' ? await parsePdf(file) : await parseDocx(file);
@@ -423,6 +426,7 @@ export default function Reader({ onExit, onNavigate }) {
       console.error(err);
       const detail = err && err.message ? ` ${err.message}` : '';
       setError(`Could not read "${file.name}". Try a different file.${detail}`);
+      setErrorStack(typeof err?.stack === 'string' ? err.stack : '');
     } finally {
       setLoading(false);
     }
@@ -521,6 +525,8 @@ export default function Reader({ onExit, onNavigate }) {
           ) : null}
 
           {error ? <div className="reader-error">{error}</div> : null}
+
+          {errorStack ? <pre className="reader-error-stack">{errorStack}</pre> : null}
 
           {doc ? (
             <>

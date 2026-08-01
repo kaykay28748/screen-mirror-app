@@ -1450,6 +1450,22 @@
   overflow-wrap: anywhere;
 }
 
+.reader-error-stack {
+  margin-top: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 10px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 .reader-toolbar {
   display: flex;
   align-items: flex-start;
