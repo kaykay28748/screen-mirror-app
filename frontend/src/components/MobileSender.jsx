@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
-
-const SOCKET_URL = 'http://localhost:5000';
-const ICE_SERVERS = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-};
+import { Capacitor } from '@capacitor/core';
+import { SOCKET_URL, ICE_SERVERS } from '../config';
 
 function MobileSender() {
   const [roomCode, setRoomCode] = useState('');
@@ -15,6 +12,18 @@ function MobileSender() {
   const pendingCandidatesRef = useRef([]);
 
   const getScreenStream = async () => {
+    if (Capacitor.isNativePlatform()) {
+      // TODO: Bridge with Capacitor native screen projection here.
+      // The native WebView has no getDisplayMedia, so mirror the camera until a
+      // MediaProjection plugin streams real screen frames via canvas.captureStream().
+      try {
+        return await window.navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      } catch (error) {
+        console.warn('Camera unavailable in native app.', error);
+        return null;
+      }
+    }
+
     try {
       if (window.navigator.mediaDevices?.getDisplayMedia) {
         return await window.navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
@@ -23,10 +32,12 @@ function MobileSender() {
       console.warn('Display media unavailable, falling back to camera.', error);
     }
 
-    // TODO: Bridge with Capacitor native screen projection here.
-    return window.navigator.mediaDevices
-      ? await window.navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-      : null;
+    try {
+      return await window.navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    } catch (error) {
+      console.warn('Unable to access any media source.', error);
+      return null;
+    }
   };
 
   const createPeerConnection = (socket) => {

@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { SOCKET_URL, ICE_SERVERS } from '../config';
+import { Masthead, Marquee, Footer } from './Chrome';
 
-const SOCKET_URL = 'http://localhost:5000';
-const ICE_SERVERS = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-};
-
-function LaptopReceiver() {
+function LaptopReceiver({ onExit }) {
   const [roomCode] = useState(() => String(Math.floor(100000 + Math.random() * 900000)));
   const [status, setStatus] = useState('Waiting for phone...');
   const [isConnected, setIsConnected] = useState(false);
@@ -121,19 +118,17 @@ function LaptopReceiver() {
     };
   }, [roomCode]);
 
-  return (
-    <section className="receiver-shell">
-      <div className="panel-card">
-        <p className="eyebrow">Laptop receiver</p>
-        <h1>Screen mirror ready</h1>
-        <p className="room-code">
-          Room code: <strong>{roomCode}</strong>
-        </p>
-        <p className="status-pill">{isConnected ? status : 'Connecting to server...'}</p>
-        <video ref={videoRef} autoPlay playsInline muted className="mirror-video" />
-      </div>
-    </section>
-  );
-}
+  const isLive = status === 'Mirroring active!';
 
-export default LaptopReceiver;
+  return (
+    <main className="app view">
+      <Masthead />
+      <Marquee />
+      <section className="view-grid">
+        <div className="stage">
+          <div className="stage-top">
+            <p className="eyebrow">* Laptop — Receiver</p>
+            <span className="stage-code-label">Room code</span>
+          </div>
+          <div className="code-plate">
+            <span className="c
