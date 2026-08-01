@@ -17,7 +17,7 @@ export function Navbar({ onExit }) {
               <path d="M12 15.5v4M8.5 19.5h7" />
             </svg>
           </span>
-          Screen Mirror
+          Hexcast
         </span>
         <div className="nav-group">
           {onExit ? (
@@ -90,8 +90,17 @@ export function Footer() {
   return (
     <footer className="footer">
       <div className="shell">
-        <span>© 2026 Screen Mirror</span>
-        <span>Video never touches the server.</span>
+        <span>
+          © 2026 Hexcast — built by <span className="footer-name">Prince Kay</span>
+        </span>
+        <a
+          className="footer-link"
+          href="https://github.com/kaykay28748/screen-mirror-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ★ Star on GitHub
+        </a>
       </div>
     </footer>
   );

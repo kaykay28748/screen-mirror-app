@@ -134,42 +134,41 @@ function LaptopReceiver({ onExit }) {
   return (
     <main className="app view">
       <Navbar onExit={onExit} />
-      <section className="panel-wrap">
-        <div className="shell">
+      <main className="page">
+        <section className="panel-wrap">
           <div className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="panel-eyebrow">Receiver</p>
-              <h2 className="panel-title">Share this code</h2>
-            </div>
-            <StatusPill live={isLive} text={isConnected ? status : 'Connecting…'} />
-          </div>
-          <div className="code-box">
-            <div>
-              <p className="code-label">Room code</p>
-              <p className="code-value">{roomCode}</p>
-            </div>
-            <button
-              type="button"
-              className={`copy-btn ${copied ? 'copied' : ''}`}
-              onClick={handleCopy}
-            >
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
-          <div className="video-frame">
-            <video ref={videoRef} autoPlay playsInline muted className="video" />
-            {!isLive ? (
-              <div className="video-idle">
-                <span className="rings" aria-hidden="true" />
-                <span className="video-idle-main">Awaiting signal</span>
-                <span className="video-idle-sub">The sender's stream will appear here</span>
+            <div className="panel-header">
+              <div>
+                <p className="panel-eyebrow">Receiver</p>
+                <h2 className="panel-title">Share this code</h2>
               </div>
-            ) : null}
+              <StatusPill live={isLive} text={isConnected ? status : 'Connecting…'} />
+            </div>
+            <div className="code-box">
+              <div>
+                <p className="code-label">Room code</p>
+                <p className="code-value">{roomCode}</p>
+              </div>
+              <button
+                type="button"
+                className={`copy-btn ${copied ? 'copied' : ''}`}
+                onClick={handleCopy}
+              >
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <div className="video-frame">
+              <video ref={videoRef} autoPlay playsInline muted className="video" />
+              {!isLive ? (
+                <div className="video-idle">
+                  <span className="video-idle-main">Awaiting signal</span>
+                  <span className="video-idle-sub">The sender&apos;s stream will appear here</span>
+                </div>
+              ) : null}
+            </div>
           </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
       <Footer />
     </main>
   );

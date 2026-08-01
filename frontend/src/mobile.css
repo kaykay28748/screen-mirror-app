@@ -1,0 +1,87 @@
+/* ============ Mobile design ============
+   All responsive/mobile-specific styles live here.
+   Imported last (after App.css) so these rules win. */
+
+/* Tablet */
+@media (max-width: 820px) {
+  .hero-visual {
+    margin-top: 44px;
+  }
+
+  .how {
+    padding: 56px 0 80px;
+  }
+}
+
+/* Phone */
+@media (max-width: 640px) {
+  .navbar {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .hero {
+    padding: 56px 0 40px;
+  }
+
+  .hero-visual {
+    margin-top: 40px;
+    padding: 20px;
+  }
+
+  .hv-track {
+    --hv-node: 42px;
+  }
+
+  .hv-node {
+    width: 42px;
+    height: 42px;
+  }
+
+  .hv-meta {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 16px;
+  }
+
+  .role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .how {
+    padding: 48px 0 72px;
+  }
+
+  .how-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .how-card + .how-card {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .panel-wrap {
+    align-items: center;
+    padding: 32px 0;
+  }
+
+  .panel {
+    padding: 24px 20px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .code-box {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .code-value {
+    letter-spacing: 0.12em;
+  }
+}

@@ -172,44 +172,44 @@ function MobileSender({ onExit }) {
   return (
     <main className="app view">
       <Navbar onExit={onExit} />
-      <section className="panel-wrap">
-        <div className="shell">
+      <main className="page">
+        <section className="panel-wrap">
           <div className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="panel-eyebrow">Sender</p>
-              <h2 className="panel-title">Join a room</h2>
+            <div className="panel-header">
+              <div>
+                <p className="panel-eyebrow">Sender</p>
+                <h2 className="panel-title">Join a room</h2>
+              </div>
+              <StatusPill live={isLive} text={isLive ? 'Live' : 'Standby'} />
             </div>
-            <StatusPill live={isLive} text={isLive ? 'Live' : 'Standby'} />
+            <p className="prompt">Enter the six-digit code from the laptop.</p>
+            <label className="sr-only" htmlFor="roomCode">
+              Room code
+            </label>
+            <input
+              id="roomCode"
+              className="code-input"
+              value={roomCode}
+              onChange={(event) => setRoomCode(event.target.value)}
+              placeholder="000000"
+              inputMode="numeric"
+              maxLength={6}
+            />
+            <button
+              type="button"
+              className="big-button"
+              onClick={() => startMirroring()}
+              disabled={roomCode.length !== 6}
+            >
+              Start mirroring
+            </button>
+            <div className="ticket-row">
+              <StatusPill text={status} />
+            </div>
+            <p className="stage-note">You&apos;ll be asked to share a window or camera to begin.</p>
           </div>
-          <p className="prompt">Enter the six-digit code from the laptop.</p>
-          <label className="sr-only" htmlFor="roomCode">
-            Room code
-          </label>
-          <input
-            id="roomCode"
-            className="code-input"
-            value={roomCode}
-            onChange={(event) => setRoomCode(event.target.value)}
-            placeholder="000000"
-            inputMode="numeric"
-            maxLength={6}
-          />
-          <button
-            type="button"
-            className="big-button"
-            onClick={() => startMirroring()}
-            disabled={roomCode.length !== 6}
-          >
-            Start mirroring
-          </button>
-          <div className="ticket-row">
-            <StatusPill text={status} />
-          </div>
-          <p className="stage-note">You'll be asked to share a window or camera to begin.</p>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
       <Footer />
     </main>
   );
