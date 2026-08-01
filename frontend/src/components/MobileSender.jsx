@@ -33,6 +33,13 @@ function MobileSender({ onExit }) {
       }
     }
 
+    const isStandalone =
+      window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+    const iosVersion = (() => {
+      const match = /iPhone OS (\d+)[_.](\d+)/.exec(navigator.userAgent);
+      return match ? `${match[1]}.${match[2]}` : null;
+    })();
+
     if (window.navigator.mediaDevices?.getDisplayMedia) {
       try {
         const stream = await window.navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
@@ -40,10 +47,20 @@ function MobileSender({ onExit }) {
         return stream;
       } catch (error) {
         console.warn('Display media unavailable, falling back to camera.', error);
-        setSourceNote('Fell back to camera');
+        const reason =
+          error && error.name === 'NotAllowedError'
+            ? 'you cancelled the picker'
+            : error && error.name
+              ? error.name
+              : 'it failed';
+        setSourceNote(`Fell back to camera (${reason})`);
       }
     } else {
-      setSourceNote('This browser can\u2019t share the screen — using camera');
+      const osNote = iosVersion ? `iOS ${iosVersion}` : 'this browser';
+      const modeNote = isStandalone
+        ? '; open in Safari tab, not the home-screen icon'
+        : '';
+      setSourceNote(`Can\u2019t share screen on ${osNote}${modeNote} \u2014 using camera`);
     }
 
     try {
