@@ -250,7 +250,7 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
 // MARK: - RTCPeerConnectionDelegate
 
 extension HexcastScreenSharePlugin: RTCPeerConnectionDelegate {
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didChangeIceConnectionState newState: RTCIceConnectionState) {
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
         let state: String
         switch newState {
         case .new: state = "new"
@@ -266,7 +266,7 @@ extension HexcastScreenSharePlugin: RTCPeerConnectionDelegate {
         notifyListeners("connectionstate", data: ["state": state])
     }
 
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerateIceCandidate candidate: RTCIceCandidate) {
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         var payload: [String: Any] = [
             "candidate": candidate.sdp,
             "sdpMLineIndex": Int(candidate.sdpMLineIndex)
@@ -277,11 +277,11 @@ extension HexcastScreenSharePlugin: RTCPeerConnectionDelegate {
         notifyListeners("icecandidate", data: ["candidate": payload])
     }
 
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didChangeSignalingState stateChanged: RTCSignalingState) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didAddStream stream: RTCMediaStream) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemoveStream stream: RTCMediaStream) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
     public func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didChangeIceGatheringState newState: RTCIceGatheringState) {}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didRemoveIceCandidates candidates: [RTCIceCandidate]) {}
     public func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
 }
