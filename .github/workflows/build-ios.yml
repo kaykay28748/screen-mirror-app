@@ -1,0 +1,161 @@
+name: Build iOS app
+
+on:
+  workflow_dispatch:
+    inputs:
+      sign:
+        description: 'Sign and export an installable IPA (requires Apple secrets)'
+        required: false
+        default: true
+        type: boolean
+      export_method:
+        description: 'Export method for the signed IPA'
+        required: false
+        default: 'ad-hoc'
+        type: choice
+        options:
+          - ad-hoc
+          - development
+          - app-store-connect
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-ios.yml'
+      - 'frontend/plugins/**'
+      - 'frontend/src/**'
+      - 'frontend/ios/**'
+      - 'frontend/package.json'
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build web assets
+        working-directory: frontend
+        run: npm run build
+
+      - name: Sync Capacitor iOS (regenerates SPM wiring + plugin class list)
+        working-directory: frontend
+        run: npx cap sync ios
+
+      - name: Import Apple signing certificate
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '' }}
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euxo pipefail
+          echo "$CERTIFICATE_BASE64" | base64 --decode > /tmp/apple_cert.p12
+
+          KEYCHAIN="build.keychain"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security import /tmp/apple_cert.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
+      - name: Install provisioning profile
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_PROVISIONING_PROFILE != '' }}
+        env:
+          PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+        run: |
+          set -euxo pipefail
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$PROFILE_BASE64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/Hexcast.mobileprovision"
+          security cms -D -i "$HOME/Library/MobileDevice/Provisioning Profiles/Hexcast.mobileprovision" -o /tmp/profile.plist
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/profile.plist)
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+          cp "$HOME/Library/MobileDevice/Provisioning Profiles/Hexcast.mobileprovision" \
+             "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+
+      - name: Archive (signed)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '' }}
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        working-directory: frontend/ios/App
+        run: |
+          set -euxo pipefail
+          xcodebuild archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/Hexcast.xcarchive" \
+            -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+            CODE_SIGN_STYLE=Automatic
+
+      - name: Export signed IPA
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '' }}
+        env:
+          EXPORT_METHOD: ${{ inputs.export_method }}
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        working-directory: frontend/ios/App
+        run: |
+          set -euxo pipefail
+          cat > /tmp/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${EXPORT_METHOD}</string>
+            <key>teamID</key>
+            <string>${DEVELOPMENT_TEAM}</string>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+          if [ -n "${PROFILE_UUID:-}" ]; then
+            /usr/libexec/PlistBuddy -c "Add :provisioningProfiles dict" /tmp/ExportOptions.plist
+            /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.screenmirror.app string $PROFILE_UUID" /tmp/ExportOptions.plist
+          fi
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Hexcast.xcarchive" \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -exportPath dist
+          ls -la dist
+
+      - name: Archive (unsigned compile check)
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.sign && secrets.APPLE_CERTIFICATE_P12 != '') }}
+        working-directory: frontend/ios/App
+        run: |
+          set -euxo pipefail
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData"
+          find "$RUNNER_TEMP/DerivedData" -name "*.app" -maxdepth 5 -print
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hexcast-iOS
+          path: |
+            frontend/ios/App/dist/*.ipa
+            ${{ runner.temp }}/DerivedData/Build/Products/Release-iphoneos/*.app
+          if-no-files-found: ignore

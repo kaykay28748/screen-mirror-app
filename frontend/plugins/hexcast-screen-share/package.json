@@ -1,0 +1,23 @@
+{
+  "name": "hexcast-screen-share",
+  "version": "0.1.0",
+  "description": "Native ReplayKit + WebRTC screen mirroring for Hexcast (Capacitor iOS)",
+  "license": "MIT",
+  "files": [
+    "ios"
+  ],
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  },
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "native",
+    "ios",
+    "webrtc",
+    "replaykit",
+    "screen-sharing"
+  ]
+}

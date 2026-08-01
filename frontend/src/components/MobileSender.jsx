@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { Capacitor } from '@capacitor/core';
 import { SOCKET_URL, ICE_SERVERS } from '../config';
 import { Navbar, Footer, StatusPill } from './Chrome';
+import { ScreenShare } from '../native/screenShare';
 
 function MobileSender({ onExit }) {
   const [roomCode, setRoomCode] = useState('');
@@ -13,13 +14,16 @@ function MobileSender({ onExit }) {
   const peerConnectionRef = useRef(null);
   const streamRef = useRef(null);
   const pendingCandidatesRef = useRef([]);
+  const nativeListenersRef = useRef([]);
+  const nativePeerRef = useRef(false);
+  const isIOSNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
   const getScreenStream = async () => {
     if (Capacitor.isNativePlatform()) {
-      // TODO: Bridge with Capacitor native screen projection here.
-      // The native WebView has no getDisplayMedia, so mirror the camera until a
-      // MediaProjection plugin streams real screen frames via canvas.captureStream().
-      setSourceNote('Native app — camera preview (real screen capture is a TODO)');
+      // Android native WebView: no getDisplayMedia. Screen sharing on Android
+      // would need a MediaProjection plugin; mirror the camera until then.
+      // (iOS is handled by the native ReplayKit + WebRTC plugin instead.)
+      setSourceNote('Native app — camera preview');
       try {
         return await window.navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       } catch (error) {
@@ -71,7 +75,141 @@ function MobileSender({ onExit }) {
     return peerConnection;
   };
 
+  const resetNativeSession = async () => {
+    nativePeerRef.current = false;
+    for (const listener of nativeListenersRef.current) {
+      try {
+        await listener.remove();
+      } catch (error) {
+        console.warn('Unable to remove native listener.', error);
+      }
+    }
+    nativeListenersRef.current = [];
+    try {
+      await ScreenShare.cleanup();
+    } catch (error) {
+      console.warn('Native cleanup failed.', error);
+    }
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    setSourceNote('');
+  };
+
+  const startNativeMirroring = async () => {
+    const socket = io(SOCKET_URL, {
+      transports: ['websocket'],
+      reconnection: true,
+    });
+
+    socketRef.current = socket;
+
+    socket.on('error', (error) => {
+      setStatus(error?.message || 'Something went wrong');
+    });
+
+    socket.on('connect', async () => {
+      try {
+        const support = await ScreenShare.isSupported();
+        if (!support.supported) {
+          setStatus('This iPhone can\u2019t record its screen');
+          return;
+        }
+        await ScreenShare.startCapture();
+        setSourceNote('Sharing the iPhone screen via ReplayKit');
+        socket.emit('join-room', { roomCode, deviceType: 'phone' });
+        setStatus('Waiting for laptop...');
+        setIsActive(true);
+      } catch (error) {
+        console.warn('Native screen capture failed.', error);
+        setStatus(error?.message || 'Screen capture failed');
+      }
+    });
+
+    socket.on('ready', async () => {
+      if (nativePeerRef.current) {
+        return;
+      }
+      nativePeerRef.current = true;
+      try {
+        const { offer } = await ScreenShare.createOffer({ iceServers: ICE_SERVERS.iceServers });
+        socket.emit('signal', { roomCode, data: offer });
+        setStatus('Offer sent');
+      } catch (error) {
+        console.warn('Native offer failed.', error);
+        setStatus(error?.message || 'Failed to start the session');
+        nativePeerRef.current = false;
+      }
+    });
+
+    socket.on('signal', async (data) => {
+      if (!data) {
+        return;
+      }
+      try {
+        if (data.type === 'answer') {
+          await ScreenShare.setRemoteDescription(data);
+          setStatus('Connected');
+        } else if (data.type === 'candidate') {
+          await ScreenShare.addIceCandidate(data.candidate);
+        }
+      } catch (error) {
+        console.warn('Native signaling error.', error);
+      }
+    });
+
+    try {
+      nativeListenersRef.current.push(
+        await ScreenShare.addListener('icecandidate', ({ candidate }) => {
+          if (candidate && socketRef.current) {
+            socketRef.current.emit('signal', {
+              roomCode,
+              data: { type: 'candidate', candidate },
+            });
+          }
+        })
+      );
+      nativeListenersRef.current.push(
+        await ScreenShare.addListener('connectionstate', ({ state }) => {
+          if (state === 'connected') {
+            setStatus('Connected');
+          }
+          if (state === 'failed' || state === 'disconnected') {
+            setStatus('Connection lost. Try again.');
+          }
+        })
+      );
+      nativeListenersRef.current.push(
+        await ScreenShare.addListener('capturestate', ({ state }) => {
+          if (state === 'error') {
+            setStatus('Screen capture was interrupted');
+          }
+        })
+      );
+    } catch (error) {
+      console.warn('Unable to attach native listeners.', error);
+    }
+
+    socket.on('peer-disconnected', () => {
+      resetNativeSession();
+      setStatus('Enter the room code to start');
+      setIsActive(false);
+    });
+
+    socket.on('disconnect', () => {
+      resetNativeSession();
+      setStatus('Connection lost. Try again.');
+      setIsActive(false);
+    });
+  };
+
   const startMirroring = () => {
+    if (isIOSNative) {
+      startNativeMirroring();
+      return;
+    }
+
     const socket = io(SOCKET_URL, {
       transports: ['websocket'],
       reconnection: true,
@@ -179,6 +317,13 @@ function MobileSender({ onExit }) {
   };
 
   const stopMirroring = () => {
+    if (isIOSNative) {
+      resetNativeSession();
+      setStatus('Enter the room code to start');
+      setIsActive(false);
+      return;
+    }
+
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
@@ -202,6 +347,21 @@ function MobileSender({ onExit }) {
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
+      if (isIOSNative) {
+        for (const listener of nativeListenersRef.current) {
+          try {
+            listener.remove();
+          } catch (error) {
+            console.warn('Unable to remove native listener.', error);
+          }
+        }
+        try {
+          ScreenShare.cleanup();
+        } catch (error) {
+          console.warn('Native cleanup failed.', error);
+        }
+        return;
+      }
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
       }
@@ -209,7 +369,7 @@ function MobileSender({ onExit }) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [isIOSNative]);
 
   const isLive = status === 'Connected';
 

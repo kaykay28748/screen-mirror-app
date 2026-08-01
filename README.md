@@ -58,6 +58,10 @@ brand check at the door. Any device with a modern browser is welcome:
 - **True peer-to-peer** — direct WebRTC `RTCPeerConnection`; media never touches
   the signaling server.
 - **Works in any modern browser** — no install needed to receive or send.
+- **True iPhone screen mirroring** — the iOS app ships a native ReplayKit +
+  WebRTC bridge (`frontend/plugins/hexcast-screen-share`), so an iPhone can
+  mirror its real screen to the laptop even though browsers and WebViews can't
+  capture a screen.
 - **PWA + native shells** — installable on desktop, Android, and iOS
   (Capacitor), with a service worker and offline-first app shell.
 - **Automatic reconnection** — the socket layer reconnects and resets gracefully
@@ -83,6 +87,54 @@ The phone captures its screen, the laptop renders it in a full 16:9 stage with
 live session status. Pairing is gated on a `ready` handshake so the offer is
 only ever sent once both sides are live.
 
+### Capturing the phone's screen
+
+No browser (or WebView) can capture an iPhone screen — `getDisplayMedia` doesn't
+exist there. So the phone side works in two modes:
+
+- **Web / PWA**: falls back to camera when a screen source isn't available.
+- **iOS native app**: the `hexcast-screen-share` Capacitor plugin runs a real
+  screen capture via ReplayKit (`RPScreenRecorder.startCapture`), feeds the
+  frames into the Google WebRTC iOS SDK, and runs the `RTCPeerConnection`
+  natively. The React layer keeps owning the Socket.io signaling — it only
+  relays offers/answers/ICE candidates between the plugin and the server, so
+  the existing backend and laptop receiver are untouched.
+
+The plugin ships as a local Swift Package (`frontend/plugins/hexcast-screen-share`)
+and is wired into the Xcode project automatically by `npx cap sync ios`
+(WebRTC comes from `github.com/stasel/WebRTC` via Swift Package Manager).
+
+## Building the iOS app without a Mac
+
+There's no Mac required to *code* this repo, and a GitHub Actions macOS runner
+can compile it for you. The workflow is `.github/workflows/build-ios.yml`.
+
+1. **Push** the repo to GitHub.
+2. Open **Actions → Build iOS app → Run workflow**. With no Apple secrets it
+   runs an unsigned compile check (proves the native code builds) and uploads
+   the raw `.app`.
+3. To get an **installable `.ipa`**, the workflow needs Apple signing secrets:
+
+   | Secret                         | What it is                                              |
+   | ------------------------------ | ------------------------------------------------------- |
+   | `APPLE_CERTIFICATE_P12`        | Your signing certificate + private key, base64-encoded  |
+   | `APPLE_CERTIFICATE_PASSWORD`   | Password for that `.p12`                                |
+   | `KEYCHAIN_PASSWORD`            | Any strong password (used for the throwaway keychain)   |
+   | `DEVELOPMENT_TEAM`             | Your 10-char Apple team ID                              |
+   | `APPLE_PROVISIONING_PROFILE`   | *(optional)* base64 of your `.mobileprovision`          |
+
+   Certificates and profiles come from the Apple Developer portal
+   (`developer.apple.com/account`). A **paid** membership lets you create a
+   certificate and an Ad Hoc / App Store profile entirely from the web portal
+   (export the cert as a `.p12`), then run the workflow with
+   `export_method: ad-hoc` and sideload the resulting `.ipa`
+   (AltStore / Sideloadly / TestFlight). A free Apple ID can only provision
+   through Xcode, which needs a Mac at least once.
+
+After the first signed build, every `npm run ios:sync`/push that touches the
+iOS or native-plugin files can re-run the workflow and pull a fresh `.ipa` from
+the **Actions → Build iOS app → Artifacts** tab.
+
 ## Tech Stack
 
 | Layer      | Choice                                  |
@@ -91,6 +143,7 @@ only ever sent once both sides are live.
 | Signaling  | Node.js + Express + Socket.io           |
 | Media      | WebRTC (getUserMedia / getDisplayMedia) |
 | Mobile     | Capacitor 8 (Android + iOS wrappers)    |
+| iOS media  | ReplayKit + Google WebRTC iOS SDK (SPM) |
 | Install    | PWA (vite-plugin-pwa, auto-update)      |
 | Fonts/UI   | Geist Mono + Playfair Display, charcoal monochrome editorial system |
 
@@ -180,30 +233,38 @@ Notes:
 
 ```
 screen-mirror-app/
+├── .github/workflows/
+│   └── build-ios.yml          # macOS CI: build + sign the iOS app (no local Mac needed)
 ├── backend/
 │   └── index.js              # Express + Socket.io signaling server
 └── frontend/
+    ├── plugins/
+    │   └── hexcast-screen-share/   # Native Capacitor iOS plugin:
+    │       ├── Package.swift       #   SPM manifest (Capacitor + WebRTC)
+    │       └── ios/Sources/.../HexcastScreenSharePlugin.swift  # ReplayKit + RTCPeerConnection
     ├── src/
     │   ├── App.jsx           # Role selection / landing
     │   ├── config.js         # SOCKET_URL + ICE_SERVERS
     │   ├── keepalive.js      # Frontend-side keepalive ping to the backend
+    │   ├── native/screenShare.js  # JS handle to the native ScreenShare plugin
     │   └── components/
     │       ├── Chrome.jsx    # Navbar, StatusPill, Footer, icons
     │       ├── LaptopReceiver.jsx   # WebRTC answerer
-    │       └── MobileSender.jsx     # WebRTC offerer
+    │       └── MobileSender.jsx     # WebRTC offerer (native iOS path included)
     ├── android/              # Capacitor Android shell
-    ├── ios/                  # Capacitor iOS shell
+    ├── ios/                  # Capacitor iOS shell (SPM-based)
     ├── vite.config.js        # Vite + PWA plugin
     └── capacitor.config.json
 ```
 
 ## Roadmap
 
-- [ ] **Native screen projection** — the browser blocks `getDisplayMedia` inside
-  the Capacitor webview, so the mobile app currently mirrors the camera. A
-  native bridge (Android `MediaProjection`, iOS `ReplayKit`) sits behind the
-  `getScreenStream()` seam in `MobileSender.jsx` and will unlock true screen
-  capture on device builds.
+- [x] **Native iPhone screen projection (iOS)** — the `hexcast-screen-share`
+  plugin mirrors the real iPhone screen via ReplayKit + WebRTC. Build it with
+  the GitHub Actions workflow (see "Building the iOS app without a Mac").
+- [ ] **Android screen projection** — the Android WebView also blocks
+  `getDisplayMedia`; the same seam is ready for a `MediaProjection` plugin
+  (the Android app currently mirrors the camera).
 - [x] **TURN relay support** — optional TURN is now configurable at build time
   via `VITE_TURN_URLS` / `VITE_TURN_USERNAME` / `VITE_TURN_CREDENTIAL`
   (see "ICE servers" above) for reliable cross-network mirroring behind strict
