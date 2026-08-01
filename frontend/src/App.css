@@ -755,6 +755,11 @@
   background: rgba(0, 0, 0, 0.35);
 }
 
+.code-input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .big-button {
   width: 100%;
   padding: 15px;
@@ -784,6 +789,36 @@
 .big-button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.big-button.stop-variant {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: var(--surface-3);
+}
+
+.stop-btn {
+  width: 100%;
+  margin-top: 24px;
+  padding: 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 500ms var(--ease-hard);
+}
+
+.stop-btn:hover {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.stop-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
 }
 
 .ticket-row {

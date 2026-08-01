@@ -131,6 +131,22 @@ function LaptopReceiver({ onExit }) {
       .catch(() => {});
   };
 
+  const stopSession = () => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    pendingCandidatesRef.current = [];
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    onExit();
+  };
+
   return (
     <main className="app view">
       <Navbar onExit={onExit} />
@@ -166,6 +182,9 @@ function LaptopReceiver({ onExit }) {
                 </div>
               ) : null}
             </div>
+            <button type="button" className="stop-btn" onClick={stopSession}>
+              Stop session
+            </button>
           </div>
         </section>
       </main>

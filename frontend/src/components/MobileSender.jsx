@@ -7,6 +7,8 @@ import { Navbar, Footer, StatusPill } from './Chrome';
 function MobileSender({ onExit }) {
   const [roomCode, setRoomCode] = useState('');
   const [status, setStatus] = useState('Enter the room code to start');
+  const [isActive, setIsActive] = useState(false);
+  const [sourceNote, setSourceNote] = useState('');
   const socketRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const streamRef = useRef(null);
@@ -17,26 +19,34 @@ function MobileSender({ onExit }) {
       // TODO: Bridge with Capacitor native screen projection here.
       // The native WebView has no getDisplayMedia, so mirror the camera until a
       // MediaProjection plugin streams real screen frames via canvas.captureStream().
+      setSourceNote('Native app — camera preview (real screen capture is a TODO)');
       try {
         return await window.navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       } catch (error) {
         console.warn('Camera unavailable in native app.', error);
+        setSourceNote('No camera available');
         return null;
       }
     }
 
-    try {
-      if (window.navigator.mediaDevices?.getDisplayMedia) {
-        return await window.navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    if (window.navigator.mediaDevices?.getDisplayMedia) {
+      try {
+        const stream = await window.navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        setSourceNote('Sharing screen');
+        return stream;
+      } catch (error) {
+        console.warn('Display media unavailable, falling back to camera.', error);
+        setSourceNote('Fell back to camera');
       }
-    } catch (error) {
-      console.warn('Display media unavailable, falling back to camera.', error);
+    } else {
+      setSourceNote('This browser can\u2019t share the screen — using camera');
     }
 
     try {
       return await window.navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     } catch (error) {
       console.warn('Unable to access any media source.', error);
+      setSourceNote('No camera available');
       return null;
     }
   };
@@ -85,6 +95,7 @@ function MobileSender({ onExit }) {
 
       socket.emit('join-room', { roomCode, deviceType: 'phone' });
       setStatus('Waiting for laptop...');
+      setIsActive(true);
     });
 
     socket.on('ready', async () => {
@@ -139,8 +150,17 @@ function MobileSender({ onExit }) {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
       pendingCandidatesRef.current = [];
-      setStatus('Waiting for laptop...');
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      setStatus('Enter the room code to start');
+      setIsActive(false);
     });
 
     socket.on('disconnect', () => {
@@ -148,9 +168,33 @@ function MobileSender({ onExit }) {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
       pendingCandidatesRef.current = [];
       setStatus('Connection lost. Try again.');
+      setIsActive(false);
     });
+  };
+
+  const stopMirroring = () => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    pendingCandidatesRef.current = [];
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    setStatus('Enter the room code to start');
+    setIsActive(false);
+    setSourceNote('');
   };
 
   useEffect(() => {
@@ -194,19 +238,24 @@ function MobileSender({ onExit }) {
               placeholder="000000"
               inputMode="numeric"
               maxLength={6}
+              disabled={isActive}
             />
             <button
               type="button"
-              className="big-button"
-              onClick={() => startMirroring()}
-              disabled={roomCode.length !== 6}
+              className={`big-button ${isActive ? 'stop-variant' : ''}`}
+              onClick={() => (isActive ? stopMirroring() : startMirroring())}
+              disabled={!isActive && roomCode.length !== 6}
             >
-              Start mirroring
+              {isActive ? 'Stop mirroring' : 'Start mirroring'}
             </button>
             <div className="ticket-row">
               <StatusPill text={status} />
             </div>
-            <p className="stage-note">You&apos;ll be asked to share a window or camera to begin.</p>
+            <p className="stage-note">
+              {isActive && sourceNote
+                ? sourceNote
+                : 'You\u2019ll be asked to share a window or camera to begin.'}
+            </p>
           </div>
         </section>
       </main>
