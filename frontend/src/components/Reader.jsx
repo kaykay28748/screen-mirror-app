@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import workerSrc from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import mammoth from 'mammoth/mammoth.browser.js';
@@ -17,7 +17,8 @@ const FEMALE_HINTS = [
   'dilara', 'elsa', 'melina', 'helena', 'greta', 'zofia', 'maja', 'kajsa',
   'cora', 'celine', 'clara', 'aura', 'ruth', 'lili', 'sarah', 'nicole', 'dee',
   'doreen', 'libby', 'sonia', 'natalie', 'elena', 'mae', 'amelie', 'charlotte',
-  'colette', 'michelle',
+  'colette', 'michelle', 'martha', 'angela', 'jessica', 'emily', 'gemma',
+  'lauren', 'nancy', 'josie', 'howie',
 ];
 
 const MALE_HINTS = [
@@ -29,7 +30,8 @@ const MALE_HINTS = [
   'kevin', 'cole', 'brian', 'arnaud', 'nathan', 'yannick', 'roger', 'eitan',
   'viktor', 'tomas', 'eddie', 'christopher', 'jordan', 'peter', 'steven',
   'stephen', 'michael', 'dan', 'danny', 'jose', 'gonzalo', 'diego', 'hugo',
-  'carles', 'enrique', 'ravi',
+  'carles', 'enrique', 'ravi', 'rishi', 'bruce', 'tom', 'charlie', 'simon',
+  'ray', 'howard', 'harold',
 ];
 
 function genderOfVoice(voice) {
@@ -40,6 +42,26 @@ function genderOfVoice(voice) {
   if (FEMALE_HINTS.some((hint) => name.includes(hint))) return 'female';
   if (MALE_HINTS.some((hint) => name.includes(hint))) return 'male';
   return null;
+}
+
+function voiceQualityScore(voice) {
+  const name = ((voice && voice.name) || '').toLowerCase();
+  if (!(voice.lang || '').toLowerCase().startsWith('en')) return -100;
+  let score = 0;
+  if (/(natural|neural|enhanced|premium|online|high\s?quality)/.test(name)) score += 3;
+  if (/(premium|enhanced|natural)/.test(name)) score += 2;
+  return score;
+}
+
+function pickBestFromList(list, preferredGender) {
+  if (!list || !list.length) return null;
+  const sorted = [...list].sort((a, b) => {
+    const ga = genderOfVoice(a) === preferredGender ? 1 : 0;
+    const gb = genderOfVoice(b) === preferredGender ? 1 : 0;
+    if (ga !== gb) return gb - ga;
+    return voiceQualityScore(b) - voiceQualityScore(a);
+  });
+  return sorted[0];
 }
 
 function normalizeText(raw) {
@@ -154,8 +176,8 @@ export default function Reader({ onExit, onNavigate }) {
   const [isPaused, setIsPaused] = useState(false);
   const [voices, setVoices] = useState([]);
   const [voiceURI, setVoiceURI] = useState('');
-  const [gender, setGender] = useState(null);
   const [rate, setRate] = useState(1);
+  const [pitch, setPitch] = useState(1);
   const [auto, setAuto] = useState(true);
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -176,8 +198,49 @@ export default function Reader({ onExit, onNavigate }) {
   const voiceRef = useRef(null);
   const autoRef = useRef(true);
   const rateRef = useRef(1);
+  const pitchRef = useRef(1);
+  const sessionRef = useRef(0);
+  const wakeLockRef = useRef(null);
   const progressRef = useRef({ pos: 0, at: 0 });
   const progressTimerRef = useRef(null);
+
+  const wakeLockSupported = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
+
+  function invalidateSpeech() {
+    sessionRef.current += 1;
+  }
+
+  const requestWakeLock = useCallback(async () => {
+    if (!wakeLockSupported) return;
+    try {
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      const lock = await navigator.wakeLock.request('screen');
+      lock.addEventListener('release', () => {
+        if (wakeLockRef.current === lock) wakeLockRef.current = null;
+      });
+      wakeLockRef.current = lock;
+    } catch {
+      /* wake lock unavailable (hidden tab, low power, unsupported) */
+    }
+  }, [wakeLockSupported]);
+
+  const releaseWakeLock = useCallback(() => {
+    if (wakeLockRef.current) {
+      try {
+        wakeLockRef.current.release();
+      } catch {
+        /* ignore */
+      }
+      wakeLockRef.current = null;
+    }
+  }, []);
 
   function markProgress(pos) {
     posRef.current = pos;
@@ -236,6 +299,45 @@ export default function Reader({ onExit, onNavigate }) {
     }, 120);
   }
 
+  function offsetAtPoint(clientX, clientY) {
+    const container = pageTextRef.current;
+    if (!container) return null;
+    const doc = container.ownerDocument;
+    let range = null;
+    if (doc.caretPositionFromPoint) {
+      const caret = doc.caretPositionFromPoint(clientX, clientY);
+      if (caret) {
+        range = doc.createRange();
+        range.setStart(container, 0);
+        range.setEnd(caret.offsetNode, caret.offset);
+      }
+    } else if (doc.caretRangeFromPoint) {
+      const caretRange = doc.caretRangeFromPoint(clientX, clientY);
+      if (caretRange) {
+        range = doc.createRange();
+        range.setStart(container, 0);
+        range.setEnd(caretRange.startContainer, caretRange.startOffset);
+      }
+    }
+    return range ? range.toString().length : null;
+  }
+
+  function handleTextClick(event) {
+    const selection = window.getSelection();
+    if (selection && selection.toString()) return;
+    const page = pagesRef.current[pageRef.current];
+    if (!page || !page.length) return;
+    const offset = offsetAtPoint(event.clientX, event.clientY);
+    if (offset == null) return;
+    const pos = Math.max(0, Math.min(page.length - 1, offset));
+    if (playingRef.current && !pausedRef.current) {
+      speakFrom(pageRef.current, pos);
+    } else {
+      posRef.current = pos;
+      markProgress(pos);
+    }
+  }
+
   useEffect(() => {
     const synth = window.speechSynthesis;
     if (!synth) {
@@ -246,28 +348,35 @@ export default function Reader({ onExit, onNavigate }) {
       if (!list || !list.length) return;
       setVoices(list);
       if (!voiceRef.current) {
-        const female = list.find((voice) => genderOfVoice(voice) === 'female');
-        const male = list.find((voice) => genderOfVoice(voice) === 'male');
-        const chosen = female || male || list[0];
+        const chosen = pickBestFromList(list, 'female');
         if (chosen) {
           voiceRef.current = chosen;
           setVoiceURI(chosen.voiceURI);
-          setGender(genderOfVoice(chosen));
         }
       }
     };
     const timer = window.setTimeout(load, 0);
     synth.addEventListener('voiceschanged', load);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && playingRef.current && !pausedRef.current) {
+        requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       window.clearTimeout(timer);
       stopProgressTicker();
+      releaseWakeLock();
       synth.removeEventListener('voiceschanged', load);
+      document.removeEventListener('visibilitychange', onVisibility);
       synth.cancel();
     };
-  }, []);
+  }, [requestWakeLock, releaseWakeLock]);
 
   function finishSession() {
+    invalidateSpeech();
     stopProgressTicker();
+    releaseWakeLock();
     playingRef.current = false;
     pausedRef.current = false;
     setIsPlaying(false);
@@ -275,6 +384,8 @@ export default function Reader({ onExit, onNavigate }) {
   }
 
   function speakFrom(pageIdx, pos) {
+    invalidateSpeech();
+    const session = sessionRef.current;
     const allPages = pagesRef.current;
     if (!allPages.length || pageIdx >= allPages.length) {
       finishSession();
@@ -290,7 +401,7 @@ export default function Reader({ onExit, onNavigate }) {
     const chunks = pageChunksRef.current[pageIdx];
 
     if (pos >= (allPages[pageIdx] || '').length) {
-      advanceOrStop(pageIdx);
+      advanceOrStop(pageIdx, session);
       return;
     }
 
@@ -308,14 +419,15 @@ export default function Reader({ onExit, onNavigate }) {
     posRef.current = pos;
     markProgress(pos);
     startProgressTicker();
-    speakChunkChain(pageIdx, startChunk, startInChunk, acc);
+    speakChunkChain(pageIdx, startChunk, startInChunk, acc, session);
   }
 
-  function advanceOrStop(pageIdx) {
+  function advanceOrStop(pageIdx, session) {
     const allPages = pagesRef.current;
-    if (!playingRef.current) return;
+    if (!playingRef.current || sessionRef.current !== session) return;
     if (autoRef.current && pageIdx < allPages.length - 1) {
       setTimeout(() => {
+        if (sessionRef.current !== session) return;
         if (playingRef.current && !pausedRef.current) speakFrom(pageIdx + 1, 0);
       }, 1600);
     } else {
@@ -323,13 +435,13 @@ export default function Reader({ onExit, onNavigate }) {
     }
   }
 
-  function speakChunkChain(pageIdx, chunkIndex, startInChunk, baseOffset) {
+  function speakChunkChain(pageIdx, chunkIndex, startInChunk, baseOffset, session) {
     const synth = window.speechSynthesis;
     const chunks = pageChunksRef.current[pageIdx];
-    if (!synth || !playingRef.current) return;
+    if (!synth || !playingRef.current || sessionRef.current !== session) return;
 
     if (!chunks || chunkIndex >= chunks.length) {
-      advanceOrStop(pageIdx);
+      advanceOrStop(pageIdx, session);
       return;
     }
 
@@ -340,31 +452,37 @@ export default function Reader({ onExit, onNavigate }) {
     const utterance = new SpeechSynthesisUtterance(chunkText);
     if (voiceRef.current) utterance.voice = voiceRef.current;
     utterance.rate = rateRef.current;
-    utterance.pitch = 1;
+    utterance.pitch = pitchRef.current;
     utterance.volume = 1;
     utterance.onboundary = (event) => {
+      if (sessionRef.current !== session) return;
       if (typeof event.charIndex === 'number') {
         markProgress(offsetBefore + event.charIndex);
       }
     };
     utterance.onend = () => {
+      if (sessionRef.current !== session) return;
       if (!playingRef.current) return;
       markProgress(offsetBefore + chunkText.length);
-      speakChunkChain(pageIdx, chunkIndex + 1, 0, baseOffset + fullChunk.length);
+      speakChunkChain(pageIdx, chunkIndex + 1, 0, baseOffset + fullChunk.length, session);
     };
     utterance.onerror = (event) => {
+      if (sessionRef.current !== session) return;
       if (event && (event.error === 'interrupted' || event.error === 'canceled')) return;
       finishSession();
     };
 
     synth.cancel();
-    synth.speak(utterance);
+    window.setTimeout(() => {
+      if (sessionRef.current !== session) return;
+      if (!playingRef.current || pausedRef.current) return;
+      synth.speak(utterance);
+    }, 30);
   }
 
-  function applyVoice(voice, selectedGender) {
+  function applyVoice(voice) {
     voiceRef.current = voice || null;
     setVoiceURI(voice ? voice.voiceURI : '');
-    setGender(selectedGender || null);
     if (playingRef.current && !pausedRef.current) {
       speakFrom(pageRef.current, posRef.current);
     }
@@ -382,6 +500,7 @@ export default function Reader({ onExit, onNavigate }) {
       playingRef.current = true;
       setIsPaused(false);
       setIsPlaying(true);
+      requestWakeLock();
       speakFrom(pageRef.current, posRef.current);
       return;
     }
@@ -389,21 +508,26 @@ export default function Reader({ onExit, onNavigate }) {
     pausedRef.current = false;
     setIsPlaying(true);
     setIsPaused(false);
+    requestWakeLock();
     speakFrom(pageRef.current, posRef.current);
   }
 
   function handlePause() {
     if (!playingRef.current || pausedRef.current) return;
+    invalidateSpeech();
     const synth = window.speechSynthesis;
     if (synth) synth.cancel();
     pausedRef.current = true;
     setIsPaused(true);
+    releaseWakeLock();
   }
 
   function handleStop() {
+    invalidateSpeech();
     stopProgressTicker();
     const synth = window.speechSynthesis;
     if (synth) synth.cancel();
+    releaseWakeLock();
     playingRef.current = false;
     pausedRef.current = false;
     posRef.current = 0;
@@ -417,9 +541,11 @@ export default function Reader({ onExit, onNavigate }) {
     if (!allPages.length) return;
     const clamped = Math.max(0, Math.min(allPages.length - 1, idx));
     const wasActive = playingRef.current;
+    invalidateSpeech();
     const synth = window.speechSynthesis;
     if (synth) synth.cancel();
     stopProgressTicker();
+    releaseWakeLock();
     playingRef.current = false;
     pausedRef.current = false;
     posRef.current = 0;
@@ -431,26 +557,28 @@ export default function Reader({ onExit, onNavigate }) {
     if (wasActive) {
       playingRef.current = true;
       setIsPlaying(true);
+      requestWakeLock();
       speakFrom(clamped, 0);
     }
   }
 
   function pickVoiceForGender(wanted) {
     if (!voices.length) return;
-    const matches = voices.filter((voice) => genderOfVoice(voice) === wanted);
-    let chosen;
-    if (matches.length) {
-      chosen =
-        matches.find((voice) => (voice.lang || '').toLowerCase().startsWith('en')) || matches[0];
-    } else {
-      chosen = voices[0];
-    }
-    applyVoice(chosen, wanted);
+    const chosen = pickBestFromList(voices, wanted);
+    if (chosen) applyVoice(chosen);
   }
 
   function changeRate(nextRate) {
     rateRef.current = nextRate;
     setRate(nextRate);
+    if (playingRef.current && !pausedRef.current) {
+      speakFrom(pageRef.current, posRef.current);
+    }
+  }
+
+  function changePitch(nextPitch) {
+    pitchRef.current = nextPitch;
+    setPitch(nextPitch);
     if (playingRef.current && !pausedRef.current) {
       speakFrom(pageRef.current, posRef.current);
     }
@@ -528,6 +656,7 @@ export default function Reader({ onExit, onNavigate }) {
   }, [currentPage]);
 
   const selectedVoice = voices.find((voice) => voice.voiceURI === voiceURI) || null;
+  const selectedGender = selectedVoice ? genderOfVoice(selectedVoice) : null;
   const pageCount = doc ? doc.pageCount : 0;
 
   return (
@@ -627,14 +756,14 @@ export default function Reader({ onExit, onNavigate }) {
                   <div className="voice-toggle" role="group" aria-label="Choose a voice">
                     <button
                       type="button"
-                      className={`voice-button ${gender === 'female' ? 'active' : ''}`}
+                      className={`voice-button ${selectedGender === 'female' ? 'active' : ''}`}
                       onClick={() => pickVoiceForGender('female')}
                     >
                       Female
                     </button>
                     <button
                       type="button"
-                      className={`voice-button ${gender === 'male' ? 'active' : ''}`}
+                      className={`voice-button ${selectedGender === 'male' ? 'active' : ''}`}
                       onClick={() => pickVoiceForGender('male')}
                     >
                       Male
@@ -645,7 +774,7 @@ export default function Reader({ onExit, onNavigate }) {
                     value={voiceURI}
                     onChange={(event) => {
                       const voice = voices.find((v) => v.voiceURI === event.target.value);
-                      if (voice) applyVoice(voice, genderOfVoice(voice));
+                      if (voice) applyVoice(voice);
                     }}
                     aria-label="Available voices"
                   >
@@ -661,7 +790,7 @@ export default function Reader({ onExit, onNavigate }) {
                 <div className="reader-control">
                   <span className="micro">Speed</span>
                   <div className="voice-toggle" role="group" aria-label="Choose reading speed">
-                    {[0.75, 1, 1.25, 1.5].map((value) => (
+                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map((value) => (
                       <button
                         key={value}
                         type="button"
@@ -671,6 +800,23 @@ export default function Reader({ onExit, onNavigate }) {
                         {value}x
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                <div className="reader-control">
+                  <span className="micro">Pitch</span>
+                  <div className="reader-pitch-row">
+                    <input
+                      type="range"
+                      className="reader-slider"
+                      min="0.5"
+                      max="1.5"
+                      step="0.05"
+                      value={pitch}
+                      onChange={(event) => changePitch(parseFloat(event.target.value))}
+                      aria-label="Reading pitch"
+                    />
+                    <span className="reader-slider-label">{pitch.toFixed(2)}x</span>
                   </div>
                 </div>
               </div>
@@ -685,7 +831,7 @@ export default function Reader({ onExit, onNavigate }) {
                       {isPaused ? 'Paused' : isPlaying ? 'Reading…' : 'Ready'}
                     </span>
                   </div>
-                  <div ref={pageTextRef} className="reader-text">
+                  <div ref={pageTextRef} className="reader-text" onClick={handleTextClick}>
                     {pages[currentPage] ? (
                       <ReadHighlight text={pages[currentPage]} pos={readPos} />
                     ) : (
@@ -694,6 +840,8 @@ export default function Reader({ onExit, onNavigate }) {
                   </div>
                 </div>
               </div>
+
+              <p className="reader-seek-hint">Tap any word in the text to re-read from there.</p>
 
               <div className="reader-transport">
                 <button
