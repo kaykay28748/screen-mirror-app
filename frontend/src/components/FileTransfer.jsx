@@ -207,6 +207,11 @@ function FileTransfer({ onExit, onNavigate, onOpenInReader }) {
     rx.parts[pending.seq] = buffer;
     rx.received += buffer.byteLength;
 
+    const channel = channelRef.current;
+    if (channel && channel.readyState === 'open') {
+      channel.send(JSON.stringify({ t: 'ack', id: pending.id, received: rx.received }));
+    }
+
     if (rx.received >= rx.size) {
       const blobParts = rx.parts.filter(Boolean);
       const blob = new Blob(blobParts, { type: rx.mime });
@@ -323,7 +328,7 @@ function FileTransfer({ onExit, onNavigate, onOpenInReader }) {
           setStatus('Linked');
           setIsLinked(true);
         } else if (state === 'failed') {
-          setStatus('Connection failed — retry');
+          setStatus('Couldn\u2019t link — retry');
           resetPeer();
         } else if (state === 'disconnected') {
           setStatus('Peer lost — reconnecting…');

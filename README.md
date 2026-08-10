@@ -204,10 +204,14 @@ ICE servers are configured with build-time env vars in `frontend/.env`
 
 - `VITE_STUN_URLS` — comma-separated STUN servers. Defaults to Google's public
   server: `stun:stun.l.google.com:19302`.
-- `VITE_TURN_URLS`, `VITE_TURN_USERNAME`, `VITE_TURN_CREDENTIAL` — optional
-  TURN relay, used when peers are behind strict firewalls/NATs that STUN can't
-  get through (e.g. cross-network mobile → desktop). Provide the username and
-  credential issued by your TURN provider.
+- `VITE_TURN_URLS`, `VITE_TURN_USERNAME`, `VITE_TURN_CREDENTIAL` — TURN relay,
+  used when peers are behind strict firewalls/NATs that STUN can't get through
+  (e.g. cross-network mobile → desktop). **No TURN is configured by default
+  the app falls back to the free Open Relay Project servers**
+  (`turn:openrelay.metered.ca:80` / `:443`), which makes cross-device links
+  work out of the box — the relay only forwards DTLS-encrypted traffic and
+  cannot read it. For production, override with your own (or a commercial)
+  TURN server and set the username/credential it issues.
 
 ```
 VITE_STUN_URLS=stun:stun.l.google.com:19302
