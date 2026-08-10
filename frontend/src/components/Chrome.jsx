@@ -64,7 +64,7 @@ export function Navbar({ onExit, onNavigate, activeView = 'home' }) {
           </button>
         </span>
         <div className="nav-group">
-          <NavLinks onNavigate={onNavigate} withReader={false} />
+          <NavLinks onNavigate={onNavigate} withReader={false} withDrop={false} />
           {onExit ? (
             <button type="button" className="back-button" onClick={onExit}>
               <svg
