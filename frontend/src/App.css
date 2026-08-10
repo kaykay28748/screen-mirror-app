@@ -349,6 +349,10 @@
   animation-delay: 360ms;
 }
 
+.hero-chips .hero-chip:nth-child(4) {
+  animation-delay: 440ms;
+}
+
 /* ============ Showcase cards ============ */
 
 .card-head {
@@ -1773,6 +1777,127 @@
 
 .reader-voice-name {
   color: var(--ink);
+}
+
+.hexdrop {
+  padding-top: 8px;
+}
+
+/* ============ File transfer (HexDrop) ============ */
+
+.ft-mode {
+  margin-bottom: 26px;
+}
+
+.ft-zone {
+  min-height: 200px;
+}
+
+.ft-panel-wrap {
+  padding-top: 32px;
+}
+
+.transfer-block {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.transfer-block-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 12px;
+}
+
+.transfer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.transfer-item {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.transfer-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.transfer-name {
+  min-width: 0;
+  font-size: 0.85rem;
+  letter-spacing: -0.01em;
+  word-break: break-word;
+}
+
+.transfer-meta {
+  flex: none;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.transfer-bar {
+  height: 3px;
+  background: var(--surface-3);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.transfer-fill {
+  height: 100%;
+  width: 0;
+  background: var(--ink);
+  transition: width 240ms var(--ease-hard);
+}
+
+.transfer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.transfer-action {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 500ms var(--ease-hard);
+}
+
+.transfer-action:hover {
+  color: var(--ink);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.transfer-action:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.transfer-action-link {
+  display: inline-flex;
+  align-items: center;
 }
 
 /* ============ Utility ============ */

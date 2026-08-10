@@ -1,4 +1,4 @@
-function NavLinks({ onNavigate, withReader = true }) {
+function NavLinks({ onNavigate, withReader = true, withDrop = true }) {
   if (!onNavigate) {
     return null;
   }
@@ -16,6 +16,11 @@ function NavLinks({ onNavigate, withReader = true }) {
       {withReader ? (
         <button type="button" className="nav-link" onClick={() => onNavigate('reader')}>
           HexRead
+        </button>
+      ) : null}
+      {withDrop ? (
+        <button type="button" className="nav-link" onClick={() => onNavigate('transfer')}>
+          HexDrop
         </button>
       ) : null}
     </div>
@@ -49,6 +54,13 @@ export function Navbar({ onExit, onNavigate, activeView = 'home' }) {
             onClick={() => onNavigate && onNavigate('reader')}
           >
             HexRead
+          </button>
+          <button
+            type="button"
+            className={`brand-product ${activeView === 'transfer' ? 'brand-product-active' : ''}`}
+            onClick={() => onNavigate && onNavigate('transfer')}
+          >
+            HexDrop
           </button>
         </span>
         <div className="nav-group">

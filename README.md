@@ -1,13 +1,17 @@
 # Hexcast
 
-> Mirror any screen, read any document.
+> Mirror any screen, send any file, read any document.
 
 **Hexcast** is a peer-to-peer screen mirroring system. Point a phone at a laptop
 (or a laptop at a phone), enter one six-digit code, and video starts flowing
 directly between the two devices — no accounts, no cloud, no cables, no apps
 to install.
 
-**HexRead** is its sibling, built into the same app: a document reader that
+**HexDrop** is its file-drop sibling: pair two devices with the same six-digit
+code and any file travels directly between them over a WebRTC data channel —
+no uploads, no servers, no size limits.
+
+**HexRead** is its audio-reader sibling, built into the same app: a document reader that
 parses PDFs and DOCX entirely in your browser and reads them aloud using your
 device's own voices. Drag a file in, press play — your document never leaves
 the device.
@@ -60,6 +64,10 @@ brand check at the door. Any device with a modern browser is welcome:
 
 - **One-code pairing** — 6-digit room codes, regenerated per session, validated
   server-side.
+- **HexDrop file drop** — send any file (any size) between paired devices over
+  a WebRTC data channel, chunked with progress bars and cancel. Fully
+  bidirectional, fully peer-to-peer; a received PDF/DOCX opens straight in
+  HexRead. No uploads, no size limits.
 - **HexRead document reader** — drop in a PDF or DOCX and it's parsed locally
   (PDF.js / Mammoth) and read aloud page by page via the Web Speech API, with
   male/female voice choice, speed control, and pause/jump. No uploads — parsing
@@ -151,6 +159,7 @@ the **Actions → Build iOS app → Artifacts** tab.
 | Frontend   | React 19 + Vite 8                       |
 | Signaling  | Node.js + Express + Socket.io           |
 | Media      | WebRTC (getUserMedia / getDisplayMedia) |
+| File drop  | WebRTC data channel (chunked, P2P)      |
 | Mobile     | Capacitor 8 (Android + iOS wrappers)    |
 | iOS media  | ReplayKit + Google WebRTC iOS SDK (SPM) |
 | Documents  | PDF.js + Mammoth (in-browser parsing)   |
@@ -254,13 +263,14 @@ screen-mirror-app/
     │       ├── Package.swift       #   SPM manifest (Capacitor + WebRTC)
     │       └── ios/Sources/.../HexcastScreenSharePlugin.swift  # ReplayKit + RTCPeerConnection
     ├── src/
-    │   ├── App.jsx           # View state machine + landing (home/laptop/phone/reader/info pages)
+    │   ├── App.jsx           # View state machine + landing (home/laptop/phone/reader/transfer/info pages)
     │   ├── config.js         # SOCKET_URL + ICE_SERVERS
     │   ├── keepalive.js      # Frontend-side keepalive ping to the backend
     │   ├── native/screenShare.js  # JS handle to the native ScreenShare plugin
     │   └── components/
     │       ├── Chrome.jsx    # Navbar, StatusPill, Footer, icons
     │       ├── Reader.jsx    # HexRead: PDF/DOCX parsing + text-to-speech
+    │       ├── FileTransfer.jsx  # HexDrop: P2P file drop over a data channel
     │       ├── InfoPages.jsx # About / FAQ / Privacy
     │       ├── LaptopReceiver.jsx   # WebRTC answerer
     │       └── MobileSender.jsx     # WebRTC offerer (native iOS path included)
@@ -277,6 +287,9 @@ screen-mirror-app/
   the GitHub Actions workflow (see "Building the iOS app without a Mac").
 - [x] **HexRead document reader** — in-browser PDF/DOCX parsing and local
   text-to-speech, shipped as a first-class "sibling" feature of the app.
+- [x] **HexDrop file drop** — P2P file transfer over a WebRTC data channel
+  (chunked, progress, cancel, bidirectional), with received PDFs/DOCX opening
+  straight in HexRead.
 - [ ] **Android screen projection** — the Android WebView also blocks
   `getDisplayMedia`; the same seam is ready for a `MediaProjection` plugin
   (the Android app currently mirrors the camera).

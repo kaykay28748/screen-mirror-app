@@ -168,7 +168,7 @@ function formatChars(n) {
   return n.toLocaleString('en-US');
 }
 
-export default function Reader({ onExit, onNavigate }) {
+export default function Reader({ onExit, onNavigate, initialFile = null, onClearFile = () => {} }) {
   const [doc, setDoc] = useState(null);
   const [pages, setPages] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -683,6 +683,16 @@ export default function Reader({ onExit, onNavigate }) {
     const file = event.dataTransfer.files && event.dataTransfer.files[0];
     if (file) handleFile(file);
   }
+
+  useEffect(() => {
+    if (!initialFile) return;
+    const timer = window.setTimeout(() => {
+      handleFile(initialFile);
+      onClearFile();
+    }, 0);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFile]);
 
   useEffect(() => {
     if (pageTextRef.current) pageTextRef.current.scrollTop = 0;

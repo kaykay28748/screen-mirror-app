@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import './App.css';
 import LaptopReceiver from './components/LaptopReceiver';
 import MobileSender from './components/MobileSender';
+import FileTransfer from './components/FileTransfer';
 import { AboutPage, FaqPage, PrivacyPage } from './components/InfoPages';
 import { Navbar, Footer, LaptopIcon, PhoneIcon } from './components/Chrome';
 
@@ -57,8 +58,14 @@ function ReadDemo() {
 
 function App() {
   const [activeView, setActiveView] = useState('home');
+  const [readerFile, setReaderFile] = useState(null);
 
   const goHome = () => setActiveView('home');
+
+  const openInReader = (file) => {
+    setReaderFile(file);
+    setActiveView('reader');
+  };
 
   if (activeView === 'laptop') {
     return <LaptopReceiver onExit={goHome} onNavigate={setActiveView} />;
@@ -68,10 +75,21 @@ function App() {
     return <MobileSender onExit={goHome} onNavigate={setActiveView} />;
   }
 
+  if (activeView === 'transfer') {
+    return (
+      <FileTransfer onExit={goHome} onNavigate={setActiveView} onOpenInReader={openInReader} />
+    );
+  }
+
   if (activeView === 'reader') {
     return (
       <Suspense fallback={<div className="app view view-loading">Loading reader…</div>}>
-        <Reader onExit={goHome} onNavigate={setActiveView} />
+        <Reader
+          onExit={goHome}
+          onNavigate={setActiveView}
+          initialFile={readerFile}
+          onClearFile={() => setReaderFile(null)}
+        />
       </Suspense>
     );
   }
@@ -93,20 +111,24 @@ function App() {
       <Navbar onNavigate={setActiveView} />
       <main className="page">
         <section className="hero">
-          <span className="eyebrow">Screen mirroring · Audio reader</span>
+          <span className="eyebrow">Screen mirroring · File drop · Audio reader</span>
           <h1 className="hero-title">
             Mirror any screen,
+            <br />
+            send any file,
             <br />
             read any document.
           </h1>
           <p className="hero-sub">
             Point a phone at a laptop — or a laptop at a phone — and pair them with a
-            six-digit code over a private, peer-to-peer link. Then let HexRead turn any
-            PDF or DOCX into a narrated read: page by page, male or female voice.
-            No accounts, no uploads — nothing ever leaves your device.
+            six-digit code over a private, peer-to-peer link. Mirror a screen, drop a file
+            between devices, or let HexRead turn any PDF or DOCX into a narrated read: page
+            by page, male or female voice. No accounts, no uploads — nothing ever leaves
+            your devices.
           </p>
           <div className="hero-chips" aria-label="What Hexcast does">
             <span className="hero-chip">P2P screen mirroring</span>
+            <span className="hero-chip">HexDrop file drop</span>
             <span className="hero-chip">HexRead audio reader</span>
             <span className="hero-chip">No accounts · No uploads</span>
           </div>
@@ -221,6 +243,44 @@ function App() {
               <span className="hv-tag">PDF · DOCX</span>
               <span className="hv-tag hv-tag-accent">Page by page</span>
               <span className="hv-tag">Male · Female voices</span>
+            </div>
+          </div>
+        </section>
+        <section className="hexread hexdrop">
+          <div className="hexread-card">
+            <span className="hexread-mark" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 4v12m0 0l-4-4m4 4l4-4" />
+                <path d="M4 15.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2.5" />
+              </svg>
+            </span>
+            <div className="hexread-body">
+              <p className="panel-eyebrow">HexDrop · Built into Hexcast</p>
+              <h2 className="hexread-title">Sends any file, device to device.</h2>
+              <p className="hexread-text">
+                Pair two devices with a six-digit code and files travel directly between them
+                over WebRTC — no uploads, no servers, no size limits. Drop a PDF or DOCX and
+                open it straight in HexRead.
+              </p>
+            </div>
+            <div className="hexread-meta">
+              <button
+                type="button"
+                className="hexread-button"
+                onClick={() => setActiveView('transfer')}
+              >
+                Open HexDrop
+              </button>
+              <span className="hv-tag">Any file</span>
+              <span className="hv-tag hv-tag-accent">Peer to peer</span>
+              <span className="hv-tag">No size limit</span>
             </div>
           </div>
         </section>
