@@ -1789,6 +1789,10 @@
   margin-bottom: 26px;
 }
 
+.stop-btn-after {
+  margin-top: 8px;
+}
+
 .ft-zone {
   min-height: 200px;
 }

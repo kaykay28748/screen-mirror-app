@@ -296,13 +296,13 @@ function FileTransfer({ onExit, onNavigate, onOpenInReader }) {
       socket.emit('join-room', { roomCode, deviceType });
     });
 
-    socket.on('ready', () => {
+    socket.on('ready', async () => {
       if (peerRef.current) return;
       setStatus('Connecting…');
       const peerConnection = new RTCPeerConnection(ICE_SERVERS);
       peerRef.current = peerConnection;
 
-      if (deviceType === 'laptop') {
+      if (deviceType === 'phone') {
         setupChannel(peerConnection.createDataChannel('hexdrop'));
       } else {
         peerConnection.ondatachannel = (event) => setupChannel(event.channel);
@@ -329,6 +329,19 @@ function FileTransfer({ onExit, onNavigate, onOpenInReader }) {
           setStatus('Peer lost — reconnecting…');
         }
       };
+
+      if (deviceType === 'phone') {
+        try {
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+          socket.emit('signal', { roomCode, data: peerConnection.localDescription });
+          setStatus('Offer sent — linking…');
+        } catch (error) {
+          console.warn('Offer failed.', error);
+          setStatus('Connection error — retry');
+          resetPeer();
+        }
+      }
     });
 
     socket.on('signal', async (data) => {
@@ -476,7 +489,7 @@ function FileTransfer({ onExit, onNavigate, onOpenInReader }) {
 
   const stopTransfer = () => {
     disconnectAll();
-    setStatus(mode === 'host' ? 'Waiting for the other device…' : 'Enter the code from the sender.');
+    setStatus(mode === 'host' ? 'Room closed — start waiting to reopen.' : 'Enter the code from the sender.');
   };
 
   const percentOf = (size, progress) => (size > 0 ? Math.min(100, Math.round((progress / size) * 100)) : 0);
@@ -545,10 +558,18 @@ function FileTransfer({ onExit, onNavigate, onOpenInReader }) {
                   <p className="prompt">Send this code to the other device.</p>
                   <p className="stage-note">{status}</p>
                   {isConnected ? (
-                    <button type="button" className="stop-btn" onClick={stopTransfer}>
+                    <button
+                      type="button"
+                      className="stop-btn stop-btn-after"
+                      onClick={stopTransfer}
+                    >
                       Stop waiting
                     </button>
-                  ) : null}
+                  ) : (
+                    <button type="button" className="big-button" onClick={connectSocket}>
+                      Start waiting
+                    </button>
+                  )}
                 </>
               ) : (
                 <>
@@ -574,6 +595,15 @@ function FileTransfer({ onExit, onNavigate, onOpenInReader }) {
                   >
                     {isConnected ? 'Waiting…' : 'Connect'}
                   </button>
+                  {isConnected ? (
+                    <button
+                      type="button"
+                      className="stop-btn stop-btn-after"
+                      onClick={stopTransfer}
+                    >
+                      Disconnect
+                    </button>
+                  ) : null}
                   <p className="stage-note">{status}</p>
                 </>
               )}
