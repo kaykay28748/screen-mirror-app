@@ -16,6 +16,7 @@ function MobileSender({ onExit, onNavigate }) {
   const pendingCandidatesRef = useRef([]);
   const nativeListenersRef = useRef([]);
   const nativePeerRef = useRef(false);
+  const resettingRef = useRef(false);
   const isIOSNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
   const isIosBrowser = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -92,11 +93,23 @@ function MobileSender({ onExit, onNavigate }) {
       }
     };
 
+    peerConnection.onconnectionstatechange = () => {
+      const state = peerConnection.connectionState;
+      if (state === 'connected') {
+        setStatus('Connected');
+      } else if (state === 'failed') {
+        setStatus('Connection failed — stop and try again');
+      } else if (state === 'disconnected') {
+        setStatus('Connection lost — stop and try again');
+      }
+    };
+
     return peerConnection;
   };
 
   const resetNativeSession = async () => {
     nativePeerRef.current = false;
+    resettingRef.current = true;
     for (const listener of nativeListenersRef.current) {
       try {
         await listener.remove();
@@ -114,6 +127,9 @@ function MobileSender({ onExit, onNavigate }) {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
+    window.setTimeout(() => {
+      resettingRef.current = false;
+    }, 1000);
     setSourceNote('');
   };
 
@@ -196,6 +212,8 @@ function MobileSender({ onExit, onNavigate }) {
             setStatus('Connected');
           }
           if (state === 'failed' || state === 'disconnected') {
+            resetNativeSession();
+            setIsActive(false);
             setStatus('Connection lost. Try again.');
           }
         })
@@ -203,7 +221,9 @@ function MobileSender({ onExit, onNavigate }) {
       nativeListenersRef.current.push(
         await ScreenShare.addListener('capturestate', ({ state }) => {
           if (state === 'error') {
-            setStatus('Screen capture was interrupted');
+            resetNativeSession();
+            setIsActive(false);
+            setStatus('Screen capture was interrupted — start again.');
           }
         })
       );
@@ -219,7 +239,9 @@ function MobileSender({ onExit, onNavigate }) {
 
     socket.on('disconnect', () => {
       resetNativeSession();
-      setStatus('Connection lost. Try again.');
+      if (!resettingRef.current) {
+        setStatus('Connection lost. Try again.');
+      }
       setIsActive(false);
     });
   };

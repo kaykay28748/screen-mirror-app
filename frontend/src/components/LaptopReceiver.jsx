@@ -51,6 +51,17 @@ function LaptopReceiver({ onExit, onNavigate }) {
           });
         }
       };
+
+      peerConnection.onconnectionstatechange = () => {
+        const state = peerConnection.connectionState;
+        if (state === 'connected') {
+          setStatus('Mirroring active!');
+        } else if (state === 'failed') {
+          setStatus('Connection failed — waiting for the phone to retry…');
+        } else if (state === 'disconnected') {
+          setStatus('Connection lost — reconnecting…');
+        }
+      };
     });
 
     socket.on('signal', (data) => {

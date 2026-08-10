@@ -93,6 +93,7 @@ io.on('connection', (socket) => {
         const previousSocket = io.sockets.sockets.get(previousSocketId);
         if (previousSocket) {
           previousSocket.leave(normalizedCode);
+          previousSocket.emit('peer-disconnected', { roomCode: normalizedCode });
         }
       }
 

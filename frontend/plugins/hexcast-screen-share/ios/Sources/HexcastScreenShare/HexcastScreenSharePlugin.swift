@@ -1,6 +1,7 @@
 import Capacitor
 import CoreMedia
 import ReplayKit
+import UIKit
 import WebRTC
 
 @objc(HexcastScreenSharePlugin)
@@ -25,6 +26,8 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
     private var videoTrack: RTCVideoTrack?
     private var peerConnection: RTCPeerConnection?
     private var capturing = false
+    private var baseTimeNs: Int64?
+    private var lastFrameNs: Int64?
 
     // MARK: - Setup
 
@@ -67,9 +70,11 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
             guard let self else { return }
             if let error {
                 self.capturing = false
+                self.setScreenAwake(false)
                 self.notifyListeners("capturestate", data: ["state": "error", "message": error.localizedDescription])
             } else {
                 self.capturing = true
+                self.setScreenAwake(true)
                 self.notifyListeners("capturestate", data: ["state": "started"])
             }
         }
@@ -84,6 +89,7 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
         }
         RPScreenRecorder.shared().stopCapture { [weak self] _ in
             self?.capturing = false
+            self?.setScreenAwake(false)
             self?.notifyListeners("capturestate", data: ["state": "stopped"])
             call.resolve()
         }
@@ -214,10 +220,22 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
     private func pushFrame(_ sampleBuffer: CMSampleBuffer) {
         guard let capturer, let videoSource else { return }
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        let timestampNs = Int64(CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer)) * 1_000_000_000)
+        var timestampNs = Int64(CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer)) * 1_000_000_000)
+        if baseTimeNs == nil {
+            baseTimeNs = timestampNs
+        }
+        timestampNs -= baseTimeNs ?? 0
+        if let last = lastFrameNs, timestampNs <= last { return }
+        lastFrameNs = timestampNs
         let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
         let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: timestampNs)
         videoSource.capturer(capturer, didCapture: frame)
+    }
+
+    private func setScreenAwake(_ awake: Bool) {
+        DispatchQueue.main.async {
+            UIApplication.shared.isIdleTimerDisabled = awake
+        }
     }
 
     private func applyVideoBitrate(_ peerConnection: RTCPeerConnection) {
@@ -239,6 +257,9 @@ public class HexcastScreenSharePlugin: CAPPlugin, CAPBridgedPlugin {
             RPScreenRecorder.shared().stopCapture { _ in }
             capturing = false
         }
+        setScreenAwake(false)
+        baseTimeNs = nil
+        lastFrameNs = nil
         peerConnection?.close()
         peerConnection = nil
         capturer = nil
