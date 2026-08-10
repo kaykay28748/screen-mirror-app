@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'Hexcast',
         short_name: 'Hexcast',
         description:
-          'Mirror a phone or laptop screen with a six-digit code, or let HexRead read PDFs and DOCX aloud page by page.',
+          'Mirror a phone or laptop screen, send any file, or let HexRead read PDFs and DOCX aloud page by page — all peer to peer, with a six-digit code.',
         theme_color: '#0a0b10',
         background_color: '#09090b',
         display: 'standalone',

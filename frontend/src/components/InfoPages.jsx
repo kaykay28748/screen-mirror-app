@@ -38,14 +38,40 @@ export function AboutPage({ onExit, onNavigate }) {
       onExit={onExit}
       onNavigate={onNavigate}
       eyebrow="About"
-      title="Mirror any screen, read any document."
-      lede="Hexcast is a browser-to-browser screen mirror built on WebRTC, with a built-in audio reader called HexRead. No accounts, no installs — just a six-digit code that pairs two devices over a private peer-to-peer link, or a PDF or DOCX you want read aloud."
+      title="Mirror any screen, send any file, read any document."
+      lede="Hexcast is a browser-to-browser screen mirror built on WebRTC, with a built-in audio reader called HexRead and a peer-to-peer file drop called HexDrop. No accounts, no installs — just a six-digit code that pairs two devices over a private peer-to-peer link, or a PDF or DOCX you want read aloud."
     >
       <InfoSection title="How it works">
         <ul>
           <li>The laptop opens the receiver and prints a random six-digit room code.</li>
           <li>The phone enters the code, and the two devices pair through a tiny signaling relay.</li>
           <li>Video then flows directly between the two devices. The relay coordinates the handshake but never sees your picture.</li>
+        </ul>
+      </InfoSection>
+
+      <InfoSection title="HexDrop — send files peer to peer">
+        <p>
+          Hexcast also ships with <strong>HexDrop</strong>, a direct file drop between two paired
+          devices:
+        </p>
+        <ul>
+          <li>
+            <strong>Pair with the same six-digit code.</strong> One device shares a code, the
+            other dials it, and a private WebRTC data channel opens between them.
+          </li>
+          <li>
+            <strong>Drop any file, in either direction.</strong> Both devices can send, at the
+            same time, with live progress bars and cancel — any size, any type.
+          </li>
+          <li>
+            <strong>Files travel directly between devices.</strong> They are chunked and streamed
+            over the peer-to-peer link; the relay only brokers the connection and never sees the
+            bytes.
+          </li>
+          <li>
+            <strong>Open received PDFs and DOCX straight in HexRead.</strong> Received documents
+            show a Read button that hands the file directly to the reader.
+          </li>
         </ul>
       </InfoSection>
 
@@ -116,9 +142,10 @@ export function AboutPage({ onExit, onNavigate }) {
 
       <InfoSection title="Your privacy at a glance">
         <p>
-          No accounts, no tracking, no stored video — and no uploaded documents. The relay only sees pairing
-          signals (room code, device type, connection hints); your screen and camera stream go straight between the
-          two devices, and HexRead files are read entirely on your device. The full policy is on the Privacy page.
+          No accounts, no tracking, no stored video — and no uploaded documents or files. The relay only sees pairing
+          signals (room code, device type, connection hints); your screen, camera, and HexDrop files go straight
+          between the two devices, and HexRead files are read entirely on your device. The full policy is on the
+          Privacy page.
         </p>
       </InfoSection>
 
@@ -136,7 +163,7 @@ export function PrivacyPage({ onExit, onNavigate }) {
       onNavigate={onNavigate}
       eyebrow="Privacy"
       title="Privacy policy"
-      lede="Hexcast is designed so that your screen, camera, and documents are never seen by the server. Here is what that means in practice."
+      lede="Hexcast is designed so that your screen, camera, documents, and files are never seen by the server. Here is what that means in practice."
     >
       <InfoSection title="We don&apos;t ask for anything">
         <p>
@@ -162,6 +189,28 @@ export function PrivacyPage({ onExit, onNavigate }) {
           Your video and audio stream directly between your two devices over WebRTC, which encrypts it with
           DTLS-SRTP. The relay never touches it, we never record it, and we never store it.
         </p>
+      </InfoSection>
+
+      <InfoSection title="HexDrop files are peer-to-peer too">
+        <p>
+          Files sent with HexDrop travel over the same encrypted WebRTC link as media, over a data channel rather
+          than a video track. In practice:
+        </p>
+        <ul>
+          <li>
+            <strong>The relay never sees the bytes.</strong> It brokers the connection only;
+            files are chunked and streamed directly between the two devices.
+          </li>
+          <li>
+            <strong>Nothing is stored or logged.</strong> We never receive, keep, or copy the
+            files you send. Their bytes live in the sending and receiving browsers&apos; memory
+            and are discarded when the page closes.
+          </li>
+          <li>
+            <strong>You choose what to send.</strong> A file only leaves your device after you
+            drop it into HexDrop while connected, and you can cancel a transfer at any time.
+          </li>
+        </ul>
       </InfoSection>
 
       <InfoSection title="HexRead documents">
@@ -190,7 +239,8 @@ export function PrivacyPage({ onExit, onNavigate }) {
       <InfoSection title="Permissions stay with you">
         <p>
           Your browser asks you to grant screen or camera access every time, and you choose exactly what to
-          share. Sharing stops the moment you stop it, leave, or the devices disconnect.
+          share. Sending a file also only happens when you drop it in yourself. Sharing and transfers stop the
+          moment you stop them, leave, or the devices disconnect.
         </p>
       </InfoSection>
 
@@ -216,9 +266,9 @@ export function PrivacyPage({ onExit, onNavigate }) {
 
       <InfoSection title="Open source">
         <p>
-          Hexcast and HexRead are open source — you can read the full implementation on GitHub and verify these
-          claims for yourself. HexRead&apos;s document parsing relies on the open-source PDF.js and Mammoth
-          libraries.
+          Hexcast, HexDrop, and HexRead are open source — you can read the full implementation on GitHub and
+          verify these claims for yourself. HexDrop uses your browser&apos;s built-in WebRTC data channel, and
+          HexRead&apos;s document parsing relies on the open-source PDF.js and Mammoth libraries.
         </p>
       </InfoSection>
     </InfoShell>
@@ -327,6 +377,56 @@ export function FaqPage({ onExit, onNavigate }) {
               DOCX and it reads the document to you page by page, in a male or female voice, with pause, page
               skip, and speed controls. The file is processed entirely in your browser and never leaves your
               device.
+            </p>
+          </details>
+        </div>
+        <div className="faq-item">
+          <details>
+            <summary>How do I send a file to another device?</summary>
+            <p className="faq-body">
+              Open <strong>HexDrop</strong> from the nav, footer, or the landing page. One device chooses
+              &ldquo;I have the file&rdquo; and shares the six-digit code; the other chooses &ldquo;I need the
+              file&rdquo; and dials it. Once the devices are linked, either side can drop files — drag and drop
+              or browse from your device.
+            </p>
+          </details>
+        </div>
+        <div className="faq-item">
+          <details>
+            <summary>Does the server see the files I send?</summary>
+            <p className="faq-body">
+              No. HexDrop streams files over the same peer-to-peer WebRTC link as video, using a data channel
+              instead of a camera track. The relay only brokers the initial connection — the file bytes travel
+              directly between your two devices and are never stored or logged anywhere.
+            </p>
+          </details>
+        </div>
+        <div className="faq-item">
+          <details>
+            <summary>Is there a file size limit in HexDrop?</summary>
+            <p className="faq-body">
+              No. Files are split into chunks and streamed continuously, so there is no fixed size cap. Very
+              large transfers use the memory of the sending and receiving browsers and take longer — but they
+              work.
+            </p>
+          </details>
+        </div>
+        <div className="faq-item">
+          <details>
+            <summary>Can I open a received document in HexRead?</summary>
+            <p className="faq-body">
+              Yes. When you receive a PDF or DOCX, it shows a <strong>Read in HexRead</strong> button that
+              hands the file straight to the reader — listen to it out loud without ever uploading it.
+            </p>
+          </details>
+        </div>
+        <div className="faq-item">
+          <details>
+            <summary>Does HexDrop work between a phone and a laptop?</summary>
+            <p className="faq-body">
+              Yes. Unlike screen sharing, file transfer doesn&apos;t need any special permission — any browser
+              that supports WebRTC data channels can send and receive. That includes iPhone and Android
+              browsers, the installed app, and desktop.
             </p>
           </details>
         </div>
