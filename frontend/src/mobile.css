@@ -33,13 +33,7 @@
   }
 
   .hero-showcase {
-    margin-top: 40px;
-    gap: 12px;
-  }
-
-  .hero-visual,
-  .read-demo {
-    padding: 20px;
+    display: none;
   }
 
   .hero-chips {
