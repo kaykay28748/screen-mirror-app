@@ -201,6 +201,7 @@ export default function Reader({ onExit, onNavigate }) {
   const pitchRef = useRef(1);
   const sessionRef = useRef(0);
   const wakeLockRef = useRef(null);
+  const lastSpeechActivityRef = useRef(0);
   const progressRef = useRef({ pos: 0, at: 0 });
   const progressTimerRef = useRef(null);
 
@@ -283,10 +284,39 @@ export default function Reader({ onExit, onNavigate }) {
     }
   }
 
+  function touchSpeechActivity() {
+    lastSpeechActivityRef.current = Date.now(); // eslint-disable-line react-hooks/purity
+  }
+
+  function resyncIfDead() {
+    if (!playingRef.current || pausedRef.current) return;
+    if (document.visibilityState !== 'visible') return;
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    if (synth.speaking && synth.paused) {
+      try {
+        synth.resume();
+      } catch {
+        /* ignore */
+      }
+      touchSpeechActivity();
+      return;
+    }
+    const now = Date.now(); // eslint-disable-line react-hooks/purity
+    if (now - lastSpeechActivityRef.current < 4000) return;
+    const page = pageRef.current;
+    const pos = posRef.current;
+    progressRef.current = { pos, at: now };
+    setReadPos(pos);
+    touchSpeechActivity();
+    speakFrom(page, pos);
+  }
+
   function startProgressTicker() {
     stopProgressTicker();
     progressTimerRef.current = window.setInterval(() => {
       if (!playingRef.current || pausedRef.current) return;
+      resyncIfDead();
       const text = pagesRef.current[pageRef.current] || '';
       const base = progressRef.current;
       const elapsed = (Date.now() - base.at) / 1000;
@@ -457,12 +487,14 @@ export default function Reader({ onExit, onNavigate }) {
     utterance.onboundary = (event) => {
       if (sessionRef.current !== session) return;
       if (typeof event.charIndex === 'number') {
+        touchSpeechActivity();
         markProgress(offsetBefore + event.charIndex);
       }
     };
     utterance.onend = () => {
       if (sessionRef.current !== session) return;
       if (!playingRef.current) return;
+      touchSpeechActivity();
       markProgress(offsetBefore + chunkText.length);
       speakChunkChain(pageIdx, chunkIndex + 1, 0, baseOffset + fullChunk.length, session);
     };
@@ -476,6 +508,7 @@ export default function Reader({ onExit, onNavigate }) {
     window.setTimeout(() => {
       if (sessionRef.current !== session) return;
       if (!playingRef.current || pausedRef.current) return;
+      touchSpeechActivity();
       synth.speak(utterance);
     }, 30);
   }
